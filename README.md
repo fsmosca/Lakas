@@ -17,3 +17,4 @@ Game parameter optimizer using nevergrad framework.
 ### D. Credits
 * [NeverGrad](https://github.com/facebookresearch/nevergrad)
 * [Cutechess](https://github.com/cutechess/cutechess)
+* [Stockfish](https://stockfishchess.org/)
