@@ -17,7 +17,7 @@ Game parameter optimizer using nevergrad framework.
 ### C. Sample optimization
 The loss is calculated by running an engine match between `test engine` and `base engine`, where the `test engine` will use the param values recommended by the optimizer and the `base engine` will use the initial or default param values. If `test engine` wins by a result of say 0.52 from `(wins + draw/2) / games`, that result is minimized to `1.0 - 0.52` or 0.48. That is then reported to the optimizer. In this tuning example, the `base engine` will always use the init or default param. In the next budget the `test engine` will use the new recommended param values from the optimizer while the `base engine` will continue to use the init or default param.
 
-In this optimization we use the oneplusone by using `--optimizer oneplusone ...`. Type `python lakas.py -h` to see more options.
+In this optimization we use the oneplusone by using `--optimizer oneplusone ...`. Type `python lakas.py -h` to see more [options](https://github.com/fsmosca/Lakas/wiki/Help).
 
 #### Command line
 ```
