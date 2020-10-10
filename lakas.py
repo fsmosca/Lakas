@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.1.0'
+__version__ = 'v0.2.0'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad']
 
 
@@ -44,7 +44,7 @@ class Objective:
                  games_per_budget=100, depth=1000, concurrency=1,
                  base_time_sec=5, inc_time_sec=0.05, match_manager='cutechess',
                  variant='normal', best_result_threshold=0.5,
-                 use_best_param=False):
+                 use_best_param=False, hashmb=64):
         self.engine_file = engine_file
         self.input_param = input_param
         self.init_param = init_param
@@ -58,6 +58,7 @@ class Objective:
         self.variant = variant
         self.best_result_threshold = best_result_threshold
         self.use_best_param = use_best_param
+        self.hashmb = hashmb
 
         self.num_budget = 0
         self.best_param = copy.deepcopy(init_param)
@@ -102,7 +103,7 @@ class Objective:
                               base_time_sec=self.base_time_sec,
                               inc_time_sec=self.inc_time_sec,
                               match_manager=self.match_manager,
-                              variant=self.variant)
+                              variant=self.variant, hashmb=self.hashmb)
 
         min_res = 1.0 - result
 
@@ -154,7 +155,7 @@ def read_result(line: str, match_manager) -> float:
 def get_match_commands(engine_file, test_options, base_options,
                        opening_file, games, depth, concurrency,
                        base_time_sec, inc_time_sec, match_manager,
-                       variant):
+                       variant, hashmb):
     if match_manager == 'cutechess':
         tour_manager = Path(Path.cwd(), './tourney_manager/cutechess/cutechess-cli.exe')
     else:
@@ -173,8 +174,8 @@ def get_match_commands(engine_file, test_options, base_options,
 
     if match_manager == 'cutechess':
         command += f' -each tc=0/0:{base_time_sec}+{inc_time_sec} depth={depth}'
-        command += f' -engine cmd={engine_file} name={test_name} {test_options} proto=uci option.Hash=64'
-        command += f' -engine cmd={engine_file} name={base_name} {base_options} proto=uci option.Hash=64'
+        command += f' -engine cmd={engine_file} name={test_name} {test_options} proto=uci option.Hash={hashmb}'
+        command += f' -engine cmd={engine_file} name={base_name} {base_options} proto=uci option.Hash={hashmb}'
         command += f' -rounds {games//2} -games 2 -repeat 2'
         command += f' -openings file={opening_file} order=random format=epd'
         command += ' -resign movecount=6 score=700 twosided=true'
@@ -195,12 +196,12 @@ def get_match_commands(engine_file, test_options, base_options,
 def engine_match(engine_file, test_options, base_options, opening_file,
                  games=10, depth=1000, concurrency=1, base_time_sec=5,
                  inc_time_sec=0.05, match_manager='cutechess',
-                 variant='normal') -> float:
+                 variant='normal', hashmb=64) -> float:
     result = ''
 
     tour_manager, command = get_match_commands(
         engine_file, test_options, base_options, opening_file, games, depth,
-        concurrency, base_time_sec, inc_time_sec, match_manager, variant)
+        concurrency, base_time_sec, inc_time_sec, match_manager, variant, hashmb)
 
     # Execute the command line to start the match.
     process = Popen(str(tour_manager) + command, stdout=PIPE, text=True)
@@ -434,7 +435,8 @@ def main():
                           match_manager=args.match_manager,
                           variant=args.variant,
                           best_result_threshold=args.best_result_threshold,
-                          use_best_param=args.use_best_param)
+                          use_best_param=args.use_best_param,
+                          hashmb=args.hash)
 
     # Prepare parameters to be optimized.
     arg = {}
