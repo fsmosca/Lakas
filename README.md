@@ -2,19 +2,86 @@
 Game parameter optimizer using nevergrad framework.
 
 
-### A. Setup
+## A. Setup
+### Windows 10
+* Install python 3.8 or later.  
+  * Link: https://www.python.org/downloads/
+* Create game_param_tuner folder on your c or other drive. I will use my d drive. Use your windows explorer to create a folder. It would look like this.  
+  `d:\game_param_tuner`
+* Download this repo, see at the top right.  
+  * Code->Download ZIP
+* Put the downloaded file `Lakas-master.zip` into the `game_param_tuner` folder.  
+* Run powershell as administrator.  
+  * In the search box at lower left of window, type `powershell` and select `Run as administrator`. You should see this.  
+  `PS C:\WINDOWS\system32>`  
+* Change to `game_param_tuner` folder.  
+  `PS C:\WINDOWS\system32> cd d:\game_param_tuner`  
+* Check the contents of the current folder by typing dir.   
+  `PS D:\game_param_tuner> dir`  
+  You should see this.  
+```
+      Directory: D:\game_param_tuner
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        12/10/2020  11:30 pm       16287737 Lakas-master.zip
+```
+* Unzip the file  
+  `PS D:\game_param_tuner> Expand-Archive Lakas-master.zip .\`  
+* Type dir to see the folder `Lakas-master`  
+  `PS D:\game_param_tuner> dir`  
+  You should see this.  
+```
+      Directory: D:\game_param_tuner
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        13/10/2020   2:05 pm                Lakas-master
+-a----        12/10/2020  11:30 pm       16287737 Lakas-master.zip
+```
+* Change to folder `Lakas-master`.  
+  `PS D:\game_param_tuner> cd Lakas-master`  
+
+* Check the version of your installed python.  
+  `PS D:\game_param_tuner\Lakas-master> python --version`  
+  This is what I have.  
+  `Python 3.8.5`  
+  
+* Create virtual environment on myvenv.  
+  `PS D:\game_param_tuner\Lakas-master> python -m venv myvenv`  
+  
+* Activate the virtual environment.  
+  * Modify the restriction first.  
+    `PS D:\game_param_tuner\Lakas-master> Set-ExecutionPolicy unrestricted`  
+    Then type A  
+  * Activate it.  
+  `PS D:\game_param_tuner\Lakas-master> .\myvenv\scripts\activate`  
+  The prompt changes and would look like this.  
+  `(myvenv) PS D:\game_param_tuner\Lakas-master>`
+  
+* Install nevergrad.  
+  `(myvenv) PS D:\game_param_tuner\Lakas-master> pip install nevergrad`  
+  Wait for it to finish.  
+  `(myvenv) PS D:\game_param_tuner\Lakas-master>`
+  
+This setup is done. You can now optimize a param of an engine. Example,   
+`(myvenv) PS D:\game_param_tuner\Lakas-master> python lakas.py --optimizer oneplusone ...`
+
+### General installation guide
 * Install python 3.8 or later
 * Install nevergrad
   * pip install nevergrad
   
 
-### B. Supported NeverGrad Optimizers
+## B. Supported NeverGrad Optimizers
 * [OnePlusOne](https://facebookresearch.github.io/nevergrad/optimizers_ref.html#nevergrad.optimization.optimizerlib.ParametrizedOnePlusOne)
 * [TBPSA](https://facebookresearch.github.io/nevergrad/optimizers_ref.html#nevergrad.optimization.optimizerlib.ParametrizedTBPSA) (Test-based population-size adaptation)
 * [Bayessian Optimization](https://facebookresearch.github.io/nevergrad/optimizers_ref.html?highlight=logger#nevergrad.optimization.optimizerlib.ParametrizedBO)
 
 
-### C. Sample optimization
+## C. Sample optimization
 The loss is calculated by running an engine match between `test engine` and `base engine`, where the `test engine` will use the param values recommended by the optimizer and the `base engine` will use the initial or default param values. If `test engine` wins by a result of say 0.52 from `(wins + draw/2) / games`, that result is minimized to `1.0 - 0.52` or 0.48. That is then reported to the optimizer. In this tuning example, the `base engine` will always use the init or default param. In the next budget the `test engine` will use the new recommended param values from the optimizer while the `base engine` will continue to use the init or default param.
 
 In this optimization we use the oneplusone by using `--optimizer oneplusone ...`. Type `python lakas.py -h` to see more [options](https://github.com/fsmosca/Lakas/wiki/Help).
@@ -61,7 +128,7 @@ python lakas.py --optimizer oneplusone --depth 4 --base-time-sec 30 --budget 100
 ```
 
 
-### D. Resuming a cancelled optimization
+## D. Resuming a cancelled optimization
 Use the option  
 `--output-data-file oneplusone.dat ...`  
 to save the optimization data into the file `oneplusone.dat`. You may resume the optimization by using the option  
@@ -80,7 +147,7 @@ The 2 budgets stored in `oneplusone.dat` are still there and new budgets will be
 If your optimizer is tbpsa save it to a different file.  
 `python lakas.py --output-data-file tbpsa.dat --optimizer tbpsa ...`  
 
-### E. Credits
+## E. Credits
 * [NeverGrad](https://github.com/facebookresearch/nevergrad)
 * [Cutechess](https://github.com/cutechess/cutechess)
 * [Stockfish](https://stockfishchess.org/)
