@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.2.0'
+__version__ = 'v0.3.0'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad']
 
 
@@ -396,6 +396,10 @@ def main():
     parser.add_argument('--variant', required=False, type=str,
                         help='Game variant, default=normal',
                         default='normal')
+    parser.add_argument('--input-data-file', required=False, type=str,
+                        help='Load the saved data to continue the optimization.')
+    parser.add_argument('--output-data-file', required=False, type=str,
+                        help='Save optimization data to this file.')
     parser.add_argument('--input-param', required=True, type=str,
                         help='The parameters that will be optimized.\n'
                              'Example 1 with 1 parameter:\n'
@@ -413,6 +417,15 @@ def main():
     optimizer_name = args.optimizer.lower()
     oneplusone_crossover = True if args.oneplusone_crossover.lower() == 'true' else False
     tbpsa_naive = True if args.tbpsa_naive.lower() == 'true' else False
+    input_data_file = args.input_data_file
+    output_data_file = args.output_data_file  # Overwrite
+
+    # Check the filename of the intended output data.
+    if (output_data_file is not None and
+            output_data_file.lower().endswith(
+                ('.py', '.pgn', '.fen', '.epd'))):
+        logger.exception('Invalid output data filename.')
+        raise NameError('Invalid output data filename.')
 
     # Convert the input param string to a dict of dict and sort by key.
     input_param = ast.literal_eval(args.input_param)
@@ -448,19 +461,35 @@ def main():
 
     # Define optimizer.
     if optimizer_name == 'oneplusone':
-        optimizer = lakas_oneplusone(instrum, optimizer_name,
-                                  args.oneplusone_noise_handling,
-                                  args.oneplusone_mutation,
-                                  oneplusone_crossover, args.budget)
+        # Continue from previous session by loading the previous data.
+        # --input-data-file data_oneplusone.dat ...
+        if input_data_file is not None:
+            loaded_optimizer = ng.optimizers.ParametrizedOnePlusOne()
+            optimizer = loaded_optimizer.load(input_data_file)
+            logger.info(f'oneplusone previous num_ask: {optimizer.num_ask}\n')
+        else:
+            optimizer = lakas_oneplusone(
+                instrum, optimizer_name, args.oneplusone_noise_handling,
+                args.oneplusone_mutation, oneplusone_crossover, args.budget)
     elif optimizer_name == 'tbpsa':
-        optimizer = lakas_tbpsa(instrum, optimizer_name, tbpsa_naive,
-                               args.tbpsa_initial_popsize, args.budget)
+        if input_data_file is not None:
+            loaded_optimizer = ng.optimizers.ParametrizedTBPSA()
+            optimizer = loaded_optimizer.load(input_data_file)
+            logger.info(f'tbpsa previous num_ask: {optimizer.num_ask}\n')
+        else:
+            optimizer = lakas_tbpsa(instrum, optimizer_name, tbpsa_naive,
+                                    args.tbpsa_initial_popsize, args.budget)
     elif optimizer_name == 'bayesopt':
-        bo_init_budget, bo_middle_point = None, False
-        optimizer = lakas_bayessian_opt(instrum, optimizer_name, args.bo_initialization,
-                            bo_init_budget, bo_middle_point,
-                            args.bo_utility_kind, args.bo_utility_kappa,
-                            args.bo_utility_xi, args.budget)
+        if input_data_file is not None:
+            loaded_optimizer = ng.optimizers.ParametrizedBO()
+            optimizer = loaded_optimizer.load(input_data_file)
+            logger.info(f'bayesopt previous num_ask: {optimizer.num_ask}\n')
+        else:
+            bo_init_budget, bo_middle_point = None, False
+            optimizer = lakas_bayessian_opt(
+                instrum, optimizer_name, args.bo_initialization,
+                bo_init_budget, bo_middle_point, args.bo_utility_kind,
+                args.bo_utility_kappa, args.bo_utility_xi, args.budget)
     else:
         logger.exception(f'optimizer {optimizer_name} is not supported.')
         raise
@@ -474,6 +503,11 @@ def main():
         x = optimizer.ask()
         loss = objective.run(**x.kwargs)
         optimizer.tell(x, loss)
+
+        # Save optimization data to continue in the next session.
+        # --output-data-file opt_data.dat ...
+        if output_data_file is not None:
+            optimizer.dump(output_data_file)
 
     # Optimization done, get the best param.
     recommendation = optimizer.provide_recommendation()
