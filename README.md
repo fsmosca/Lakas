@@ -3,7 +3,7 @@ Game parameter optimizer using nevergrad framework.
 
 
 ## A. Setup
-### Windows 10
+### Install on virtual enviroment on Windows 10
 * Install python 3.8 or later.  
   * Link: https://www.python.org/downloads/
 * Create game_param_tuner folder on your c or other drive. I will use my d drive. Use your windows explorer to create a folder. It would look like this.  
