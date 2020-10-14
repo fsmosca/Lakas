@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.4.0'
+__version__ = 'v0.5.0'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad']
 
 
@@ -458,14 +458,6 @@ def main():
                                    upper=v['upper']).set_integer_casting()})
     instrum = ng.p.Instrumentation(**arg)
     logger.info(f'parameter dimension: {instrum.dimension}')
-
-    # Cancel optimization if optimizer is bayesopt and number
-    # of parameters is 10 or more.
-    if instrum.dimension >= 10 and optimizer_name == 'bayesopt':
-        logger.exception('Nevergrad 0.4.2 using bayessian optimization'
-                         ' has a bug when parameter dimension is 10 or more.'
-                         ' Reduce your parameters to within 9.')
-        raise ValueError('bayesopt param dimension >= 10.')
 
     # Define optimizer.
     if optimizer_name == 'oneplusone':
