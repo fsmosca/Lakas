@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.5.0'
+__version__ = 'v0.5.1'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad']
 
 
@@ -258,7 +258,8 @@ def lakas_bayessian_opt(instrum, name, initialization='Hammersley',
     """
     Ref.: https://facebookresearch.github.io/nevergrad/optimizers_ref.html?highlight=logger#nevergrad.optimization.optimizerlib.ParametrizedBO
     """
-    gp_param = {'alpha': 1e-3, 'n_restarts_optimizer': 5}
+    gp_param = {'alpha': 1e-3, 'normalize_y': True,
+                'n_restarts_optimizer': 5, 'random_state': None}
 
     logger.info(f'optimizer: {name},'
                 f' initialization: {initialization},'
