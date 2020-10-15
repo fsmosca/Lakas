@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.5.1'
+__version__ = 'v0.6.0'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad']
 
 
@@ -254,11 +254,11 @@ def lakas_tbpsa(instrum, name, naive=True, initial_popsize=None, budget=100):
 def lakas_bayessian_opt(instrum, name, initialization='Hammersley',
                         init_budget=None, middle_point=False,
                         utility_kind='ucb', utility_kappa=2.576,
-                        utility_xi=0.0, budget=100):
+                        utility_xi=0.0, budget=100, gp_param_alpha=0.001):
     """
     Ref.: https://facebookresearch.github.io/nevergrad/optimizers_ref.html?highlight=logger#nevergrad.optimization.optimizerlib.ParametrizedBO
     """
-    gp_param = {'alpha': 1e-3, 'normalize_y': True,
+    gp_param = {'alpha': gp_param_alpha, 'normalize_y': True,
                 'n_restarts_optimizer': 5, 'random_state': None}
 
     logger.info(f'optimizer: {name},'
@@ -368,6 +368,11 @@ def main():
                              'Example:\n'
                              '--optimizer bayesopt --bo-initialization random ...',
                         default='Hammersley')
+    parser.add_argument('--bo-gp-param-alpha', required=False, type=float,
+                        help='Parameter for bayesopt optimizer on gaussian process regressor, default=0.001.\n'
+                             'Example:\n'
+                             '--optimizer bayesopt --bo-gp-param-alpha 0.05 ...',
+                        default=0.001)
     parser.add_argument('--budget', required=False, type=int,
                         help='Iterations to execute, default=1000.',
                         default=1000)
@@ -490,7 +495,8 @@ def main():
             optimizer = lakas_bayessian_opt(
                 instrum, optimizer_name, args.bo_initialization,
                 bo_init_budget, bo_middle_point, args.bo_utility_kind,
-                args.bo_utility_kappa, args.bo_utility_xi, args.budget)
+                args.bo_utility_kappa, args.bo_utility_xi, args.budget,
+                args.bo_gp_param_alpha)
     else:
         logger.exception(f'optimizer {optimizer_name} is not supported.')
         raise
