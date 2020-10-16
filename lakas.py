@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.6.0'
+__version__ = 'v0.6.1'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad']
 
 
@@ -502,8 +502,8 @@ def main():
         raise
 
     # Save optimization log to file, append mode.
-    nevergrad_loger = ng.callbacks.ParametersLogger('log_nevergrad.txt')
-    optimizer.register_callback("tell", nevergrad_loger)
+    nevergrad_logger = ng.callbacks.ParametersLogger('log_nevergrad.txt')
+    optimizer.register_callback("tell", nevergrad_logger)
 
     # Start the optimization.
     for _ in range(optimizer.budget):
