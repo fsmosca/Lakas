@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.8.2'
+__version__ = 'v0.9.0'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad']
 
 
@@ -230,7 +230,7 @@ def lakas_oneplusone(instrum, name, noise_handling='optimistic',
     """
     # If input noise handling is a tuple, i.e "(optimistic, 0.01)".
     if '(' in noise_handling:
-        oneplusone_noise_handling = ast.literal_eval(noise_handling)
+        noise_handling = ast.literal_eval(noise_handling)
 
     logger.info(f'optimizer: {name}, '
                 f'noise_handling: {noise_handling}, '
