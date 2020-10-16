@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.7.0'
+__version__ = 'v0.8.0'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad']
 
 
@@ -428,6 +428,7 @@ def main():
     optimizer_name = args.optimizer.lower()
     oneplusone_crossover = True if args.oneplusone_crossover.lower() == 'true' else False
     tbpsa_naive = True if args.tbpsa_naive.lower() == 'true' else False
+    optimizer_log_file = args.optimizer_log_file
     input_data_file = args.input_data_file
     output_data_file = args.output_data_file  # Overwrite
 
@@ -507,7 +508,7 @@ def main():
         raise
 
     # Save optimization log to file, append mode.
-    nevergrad_logger = ng.callbacks.ParametersLogger(args.optimizer_log_file)
+    nevergrad_logger = ng.callbacks.ParametersLogger(optimizer_log_file)
     optimizer.register_callback("tell", nevergrad_logger)
 
     # Start the optimization.
@@ -525,6 +526,17 @@ def main():
     recommendation = optimizer.provide_recommendation()
     best_param = recommendation.value
     logger.info(f'best_param: {best_param[1]}')
+
+    # Plot optimization data with hiplot, save it to html file.
+    # Install the hiplot lib with "pip install hiplot".
+    try:
+        exp = nevergrad_logger.to_hiplot_experiment()
+    except ImportError as msg:
+        logger.warning(msg)
+    except Exception:
+        logger.exception('Unexpected exception.')
+    else:
+        exp.to_html(f'{optimizer_log_file}.html')
 
 
 if __name__ == "__main__":
