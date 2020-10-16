@@ -3,71 +3,8 @@ Game parameter optimizer using nevergrad framework.
 
 
 ## A. Setup
-### Install on virtual enviroment on Windows 10
-* Install python 3.8 or later.  
-  * Link: https://www.python.org/downloads/
-* Create game_param_tuner folder on your c or other drive. I will use my d drive. Use your windows explorer to create a folder. It would look like this.  
-  `d:\game_param_tuner`
-* Download this repo, see at the top right.  
-  * Code->Download ZIP
-* Put the downloaded file `Lakas-master.zip` into the `game_param_tuner` folder.  
-* Run powershell as administrator.  
-  * In the search box at lower left of window, type `powershell` and select `Run as administrator`. You should see this.  
-  `PS C:\WINDOWS\system32>`  
-* Change to `game_param_tuner` folder.  
-  `PS C:\WINDOWS\system32> cd d:\game_param_tuner`  
-* Check the contents of the current folder by typing dir.   
-  `PS D:\game_param_tuner> dir`  
-  You should see this.  
-```
-      Directory: D:\game_param_tuner
-
-
-Mode                 LastWriteTime         Length Name
-----                 -------------         ------ ----
--a----        12/10/2020  11:30 pm       16287737 Lakas-master.zip
-```
-* Unzip the file  
-  `PS D:\game_param_tuner> Expand-Archive Lakas-master.zip .\`  
-* Type dir to see the folder `Lakas-master`  
-  `PS D:\game_param_tuner> dir`  
-  You should see this.  
-```
-      Directory: D:\game_param_tuner
-
-
-Mode                 LastWriteTime         Length Name
-----                 -------------         ------ ----
-d-----        13/10/2020   2:05 pm                Lakas-master
--a----        12/10/2020  11:30 pm       16287737 Lakas-master.zip
-```
-* Change to folder `Lakas-master`.  
-  `PS D:\game_param_tuner> cd Lakas-master`  
-
-* Check the version of your installed python.  
-  `PS D:\game_param_tuner\Lakas-master> python --version`  
-  This is what I have.  
-  `Python 3.8.5`  
-  
-* Create virtual environment on myvenv.  
-  `PS D:\game_param_tuner\Lakas-master> python -m venv myvenv`  
-  
-* Activate the virtual environment.  
-  * Modify the restriction first.  
-    `PS D:\game_param_tuner\Lakas-master> Set-ExecutionPolicy unrestricted`  
-    Then type A  
-  * Activate it.  
-  `PS D:\game_param_tuner\Lakas-master> .\myvenv\scripts\activate`  
-  The prompt changes and would look like this.  
-  `(myvenv) PS D:\game_param_tuner\Lakas-master>`
-  
-* Install requirements.txt   
-  `(myvenv) PS D:\game_param_tuner\Lakas-master> pip install -r requirements.txt`   
-  Wait for it to finish.  
-  `(myvenv) PS D:\game_param_tuner\Lakas-master>`
-  
-This setup is done. You can now optimize a param of an engine. Example,   
-`(myvenv) PS D:\game_param_tuner\Lakas-master> python lakas.py --optimizer oneplusone ...`
+### Specific installation example
+A guide to install on [windows 10](https://github.com/fsmosca/Lakas/wiki/Windows-10-setup).
 
 ### General installation guide
 * Install python 3.8 or later
