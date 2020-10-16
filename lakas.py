@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.6.1'
+__version__ = 'v0.7.0'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad']
 
 
@@ -406,6 +406,11 @@ def main():
                         help='Load the saved data to continue the optimization.')
     parser.add_argument('--output-data-file', required=False, type=str,
                         help='Save optimization data to this file.')
+    parser.add_argument('--optimizer-log-file', required=False, type=str,
+                        help='The filename of the log of certain optimization'
+                             ' session. This file can be used to create a'
+                             ' plot. Default=log_nevergrad.txt, Mode=append.',
+                        default='log_nevergrad.txt')
     parser.add_argument('--input-param', required=True, type=str,
                         help='The parameters that will be optimized.\n'
                              'Example 1 with 1 parameter:\n'
@@ -502,7 +507,7 @@ def main():
         raise
 
     # Save optimization log to file, append mode.
-    nevergrad_logger = ng.callbacks.ParametersLogger('log_nevergrad.txt')
+    nevergrad_logger = ng.callbacks.ParametersLogger(args.optimizer_log_file)
     optimizer.register_callback("tell", nevergrad_logger)
 
     # Start the optimization.
