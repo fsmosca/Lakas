@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.8.0'
+__version__ = 'v0.8.1'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad']
 
 
@@ -63,6 +63,7 @@ class Objective:
         self.num_budget = 0
         self.best_param = copy.deepcopy(init_param)
         self.best_min_value = 1.0 - best_result_threshold
+        self.best_corrected_min_value = self.best_min_value
         self.best_budget_num = 1
 
         self.test_param = {}
@@ -111,16 +112,20 @@ class Objective:
                     f' minimized result: {min_res:0.5f},'
                     ' point of view: recommended\n')
 
-        if min_res <= 1.0 - self.best_result_threshold:
-            if self.use_best_param:
-                # The smaller the min_res the better for the optimizer.
-                self.best_min_value = self.best_min_value - (1.0 - min_res) * 0.01
-                min_res = self.best_min_value
-            else:
+        # If optimizer param vs init param. use_best_param=False by default.
+        if not self.use_best_param:
+            if min_res <= self.best_min_value:
+                # Just update for display purposes.
                 self.best_min_value = min_res
-
-            self.best_param = copy.deepcopy(self.test_param)
-            self.best_budget_num = self.num_budget
+                self.best_param = copy.deepcopy(self.test_param)
+                self.best_budget_num = self.num_budget
+        # Else if optimizer param vs best param
+        else:
+            if min_res <= 1.0 - self.best_result_threshold:
+                self.best_corrected_min_value = self.best_corrected_min_value - (1.0 - min_res) * 0.01
+                min_res = self.best_corrected_min_value
+                self.best_param = copy.deepcopy(self.test_param)
+                self.best_budget_num = self.num_budget
 
         return min_res
 
