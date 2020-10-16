@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.8.1'
+__version__ = 'v0.8.2'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad']
 
 
@@ -397,8 +397,8 @@ def main():
                         default=0.5)
     parser.add_argument('--use-best-param', action='store_true',
                         help='Use best param for the base engine. A param'
-                             ' becomes best if it defeats the\n'
-                             'test engine by --best-result-threshold value.')
+                             ' becomes best if it defeats or equalize the\n'
+                             'current best by --best-result-threshold value.')
     parser.add_argument('--match-manager', required=False, type=str,
                         help='Match manager name, can be cutechess or duel, default=cutechess.',
                         default='cutechess')
