@@ -61,8 +61,8 @@ d-----        13/10/2020   2:05 pm                Lakas-master
   The prompt changes and would look like this.  
   `(myvenv) PS D:\game_param_tuner\Lakas-master>`
   
-* Install nevergrad.  
-  `(myvenv) PS D:\game_param_tuner\Lakas-master> pip install nevergrad`  
+* Install requirements.txt   
+  `(myvenv) PS D:\game_param_tuner\Lakas-master> pip install -r requirements.txt`   
   Wait for it to finish.  
   `(myvenv) PS D:\game_param_tuner\Lakas-master>`
   
@@ -73,6 +73,8 @@ This setup is done. You can now optimize a param of an engine. Example,
 * Install python 3.8 or later
 * Install nevergrad
   * pip install nevergrad
+* Install hiplot for plotting
+  * pip install hiplot
   
 
 ## B. Supported NeverGrad Optimizers
@@ -151,3 +153,4 @@ If your optimizer is tbpsa save it to a different file.
 * [NeverGrad](https://github.com/facebookresearch/nevergrad)
 * [Cutechess](https://github.com/cutechess/cutechess)
 * [Stockfish](https://stockfishchess.org/)
+* [HiPlot](https://github.com/facebookresearch/hiplot)
