@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.9.0'
+__version__ = 'v0.9.1'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad']
 
 
@@ -542,6 +542,12 @@ def main():
         logger.exception('Unexpected exception.')
     else:
         exp.to_html(f'{optimizer_log_file}.html')
+
+    # Output for match manager.
+    option_output = ''
+    for k, v in best_param[1].items():
+        option_output += f'option.{k}={v} '
+    logger.info(f'{option_output}\n')
 
 
 if __name__ == "__main__":
