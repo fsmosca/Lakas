@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.9.1'
+__version__ = 'v0.10.0'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad']
 
 
@@ -44,7 +44,7 @@ class Objective:
                  games_per_budget=100, depth=1000, concurrency=1,
                  base_time_sec=5, inc_time_sec=0.05, match_manager='cutechess',
                  variant='normal', best_result_threshold=0.5,
-                 use_best_param=False, hashmb=64):
+                 use_best_param=False, hashmb=64, common_param=None):
         self.engine_file = engine_file
         self.input_param = input_param
         self.init_param = init_param
@@ -59,6 +59,7 @@ class Objective:
         self.best_result_threshold = best_result_threshold
         self.use_best_param = use_best_param
         self.hashmb = hashmb
+        self.common_param = common_param
 
         self.num_budget = 0
         self.best_param = copy.deepcopy(init_param)
@@ -77,9 +78,15 @@ class Objective:
         for k, v in param.items():
             test_options += f'option.{k}={v} '
             self.test_param.update({k: v})
-        test_options = test_options.rstrip()
 
         logger.info(f'recommended param: {self.test_param}')
+
+        # Add common param. It should not be included in the test param.
+        if self.common_param is not None:
+            for k, v in self.common_param.items():
+                test_options += f'option.{k}={v} '
+
+        test_options = test_options.rstrip()
 
         # Options for base engine.
         base_options = ''
@@ -89,10 +96,20 @@ class Objective:
         else:
             for k, v in self.init_param.items():
                 base_options += f'option.{k}={v} '
+
+        # Add common param.
+        if self.common_param is not None:
+            for k, v in self.common_param.items():
+                base_options += f'option.{k}={v} '
+
         base_options = base_options.rstrip()
 
         logger.info(f'best param: {self.best_param}')
         logger.info(f'init param: {self.init_param}')
+
+        if self.common_param is not None:
+            logger.info(f'common param: {self.common_param}')
+
         if self.use_best_param:
             logger.info(f'recommended vs best')
         else:
@@ -427,6 +444,11 @@ def main():
                              ' \'knight\': {\'init\': 300, \'lower\': 250,'
                              ' \'upper\': 350}}\"'
                         )
+    parser.add_argument('--common-param', required=False, type=str,
+                        help='The parameters that will be sent to both test and base engines.\n'
+                             'Make sure that this param is not included in the input-param.\n'
+                             'Example:\n'
+                             '--common-param \"{\'RookOpenFile\': 92, \'KnightOutpost\': 300}\"')
 
     args = parser.parse_args()
 
@@ -436,6 +458,7 @@ def main():
     optimizer_log_file = args.optimizer_log_file
     input_data_file = args.input_data_file
     output_data_file = args.output_data_file  # Overwrite
+    common_param = args.common_param
 
     # Check the filename of the intended output data.
     if (output_data_file is not None and
@@ -443,6 +466,9 @@ def main():
                 ('.py', '.pgn', '.fen', '.epd'))):
         logger.exception('Invalid output data filename.')
         raise NameError('Invalid output data filename.')
+
+    if common_param is not None:
+        common_param = ast.literal_eval(common_param)
 
     # Convert the input param string to a dict of dict and sort by key.
     input_param = ast.literal_eval(args.input_param)
@@ -466,7 +492,7 @@ def main():
                           variant=args.variant,
                           best_result_threshold=args.best_result_threshold,
                           use_best_param=args.use_best_param,
-                          hashmb=args.hash)
+                          hashmb=args.hash, common_param=common_param)
 
     # Prepare parameters to be optimized.
     arg = {}
