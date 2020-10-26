@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.10.0'
+__version__ = 'v0.10.1'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad']
 
 
@@ -139,6 +139,8 @@ class Objective:
         # Else if optimizer param vs best param
         else:
             if min_res <= 1.0 - self.best_result_threshold:
+                # Modify the loss that is reported to the optimizer as
+                # the base engine will be using the current best param.
                 self.best_corrected_min_value = self.best_corrected_min_value - (1.0 - min_res) * 0.01
                 min_res = self.best_corrected_min_value
                 self.best_param = copy.deepcopy(self.test_param)
@@ -148,7 +150,7 @@ class Objective:
 
 
 def set_param(input_param):
-    """Converts input param to a dict of param_name: init_value"""
+    """Converts input param to a dict of param_name: init value"""
     new_param = {}
     for k, v in input_param.items():
         new_param.update({k: v['init']})
@@ -157,8 +159,12 @@ def set_param(input_param):
 
 
 def read_result(line: str, match_manager) -> float:
-    """Read result output line from Cutechess.
-    Score of e1 vs e2: 39 - 28 - 64  [0.542] 131
+    """
+    Read result output line from match manager.
+    cutechess:
+      Score of e1 vs e2: 39 - 28 - 64  [0.542] 131
+    duel:
+      Score of e1 vs e2: [0.542] 131
     """
     if match_manager == 'cutechess':
         num_wins = int(line.split(': ')[1].split(' -')[0])
