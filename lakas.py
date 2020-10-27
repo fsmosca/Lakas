@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.10.2'
+__version__ = 'v0.10.3'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad']
 
 
@@ -250,66 +250,85 @@ def engine_match(engine_file, test_options, base_options, opening_file,
     return result
 
 
-def lakas_oneplusone(instrum, name, noise_handling='optimistic',
+def lakas_oneplusone(instrum, name, input_data_file,
+                     noise_handling='optimistic',
                      mutation='gaussian', crossover=False, budget=100):
     """
     Ref.: https://facebookresearch.github.io/nevergrad/optimizers_ref.html?highlight=logger#nevergrad.families.ParametrizedOnePlusOne
     """
-    # If input noise handling is a tuple, i.e "(optimistic, 0.01)".
-    if '(' in noise_handling:
-        noise_handling = ast.literal_eval(noise_handling)
+    # Continue from previous session by loading the previous data.
+    if input_data_file is not None:
+        loaded_optimizer = ng.optimizers.ParametrizedOnePlusOne()
+        optimizer = loaded_optimizer.load(input_data_file)
+        logger.info(f'oneplusone previous num_ask: {optimizer.num_ask}\n')
+    else:
+        # If input noise handling is a tuple, i.e "(optimistic, 0.01)".
+        if '(' in noise_handling:
+            noise_handling = ast.literal_eval(noise_handling)
 
-    logger.info(f'optimizer: {name}, '
-                f'noise_handling: {noise_handling}, '
-                f'mutation: {mutation}, crossover: {crossover}\n')
+        logger.info(f'optimizer: {name}, '
+                    f'noise_handling: {noise_handling}, '
+                    f'mutation: {mutation}, crossover: {crossover}\n')
 
-    my_opt = ng.optimizers.ParametrizedOnePlusOne(
-        noise_handling=noise_handling, mutation=mutation, crossover=crossover)
+        my_opt = ng.optimizers.ParametrizedOnePlusOne(
+            noise_handling=noise_handling, mutation=mutation, crossover=crossover)
 
-    optimizer = my_opt(parametrization=instrum, budget=budget)
+        optimizer = my_opt(parametrization=instrum, budget=budget)
 
     return optimizer
 
 
-def lakas_tbpsa(instrum, name, naive=True, initial_popsize=None, budget=100):
+def lakas_tbpsa(instrum, name, input_data_file, naive=True,
+                initial_popsize=None, budget=100):
     """
     Ref.: https://facebookresearch.github.io/nevergrad/optimizers_ref.html?highlight=logger#nevergrad.families.ParametrizedTBPSA
     """
-    logger.info(f'optimizer: {name}, naive: {naive}, initial_popsize: {initial_popsize}\n')
-    my_opt = ng.optimizers.ParametrizedTBPSA(naive=naive,
-                                             initial_popsize=initial_popsize)
-    optimizer = my_opt(parametrization=instrum, budget=budget)
+    if input_data_file is not None:
+        loaded_optimizer = ng.optimizers.ParametrizedTBPSA()
+        optimizer = loaded_optimizer.load(input_data_file)
+        logger.info(f'tbpsa previous num_ask: {optimizer.num_ask}\n')
+    else:
+        logger.info(f'optimizer: {name}, naive: {naive}, initial_popsize: {initial_popsize}\n')
+        my_opt = ng.optimizers.ParametrizedTBPSA(naive=naive,
+                                                 initial_popsize=initial_popsize)
+        optimizer = my_opt(parametrization=instrum, budget=budget)
 
     return optimizer
 
 
-def lakas_bayessian_opt(instrum, name, initialization='Hammersley',
+def lakas_bayessian_opt(instrum, name, input_data_file,
+                        initialization='Hammersley',
                         init_budget=None, middle_point=False,
                         utility_kind='ucb', utility_kappa=2.576,
                         utility_xi=0.0, budget=100, gp_param_alpha=0.001):
     """
     Ref.: https://facebookresearch.github.io/nevergrad/optimizers_ref.html?highlight=logger#nevergrad.optimization.optimizerlib.ParametrizedBO
     """
-    gp_param = {'alpha': gp_param_alpha, 'normalize_y': True,
-                'n_restarts_optimizer': 5, 'random_state': None}
+    if input_data_file is not None:
+        loaded_optimizer = ng.optimizers.ParametrizedBO()
+        optimizer = loaded_optimizer.load(input_data_file)
+        logger.info(f'bayesopt previous num_ask: {optimizer.num_ask}\n')
+    else:
+        gp_param = {'alpha': gp_param_alpha, 'normalize_y': True,
+                    'n_restarts_optimizer': 5, 'random_state': None}
 
-    logger.info(f'optimizer: {name},'
-                f' initialization: {initialization},'
-                f' init_budget: {init_budget},'
-                f' middle_point: {middle_point},'
-                f' utility_kind: {utility_kind},'
-                f' utility_kappa: {utility_kappa},'
-                f' utility_xi: {utility_xi},'
-                f' gp_parameters: {gp_param}\n')
+        logger.info(f'optimizer: {name},'
+                    f' initialization: {initialization},'
+                    f' init_budget: {init_budget},'
+                    f' middle_point: {middle_point},'
+                    f' utility_kind: {utility_kind},'
+                    f' utility_kappa: {utility_kappa},'
+                    f' utility_xi: {utility_xi},'
+                    f' gp_parameters: {gp_param}\n')
 
-    my_opt = ng.optimizers.ParametrizedBO(
-        initialization=initialization, init_budget=init_budget,
-        middle_point=middle_point,
-        utility_kind=utility_kind, utility_kappa=utility_kappa,
-        utility_xi=utility_xi,
-        gp_parameters=gp_param)
+        my_opt = ng.optimizers.ParametrizedBO(
+            initialization=initialization, init_budget=init_budget,
+            middle_point=middle_point,
+            utility_kind=utility_kind, utility_kappa=utility_kappa,
+            utility_xi=utility_xi,
+            gp_parameters=gp_param)
 
-    optimizer = my_opt(parametrization=instrum, budget=budget)
+        optimizer = my_opt(parametrization=instrum, budget=budget)
 
     return optimizer
 
@@ -514,36 +533,21 @@ def main():
 
     # Define optimizer.
     if optimizer_name == 'oneplusone':
-        # Continue from previous session by loading the previous data.
-        # --input-data-file data_oneplusone.dat ...
-        if input_data_file is not None:
-            loaded_optimizer = ng.optimizers.ParametrizedOnePlusOne()
-            optimizer = loaded_optimizer.load(input_data_file)
-            logger.info(f'oneplusone previous num_ask: {optimizer.num_ask}\n')
-        else:
-            optimizer = lakas_oneplusone(
-                instrum, optimizer_name, args.oneplusone_noise_handling,
-                args.oneplusone_mutation, oneplusone_crossover, args.budget)
+        optimizer = lakas_oneplusone(
+            instrum, optimizer_name, input_data_file,
+            args.oneplusone_noise_handling, args.oneplusone_mutation,
+            oneplusone_crossover, args.budget)
     elif optimizer_name == 'tbpsa':
-        if input_data_file is not None:
-            loaded_optimizer = ng.optimizers.ParametrizedTBPSA()
-            optimizer = loaded_optimizer.load(input_data_file)
-            logger.info(f'tbpsa previous num_ask: {optimizer.num_ask}\n')
-        else:
-            optimizer = lakas_tbpsa(instrum, optimizer_name, tbpsa_naive,
-                                    args.tbpsa_initial_popsize, args.budget)
+        optimizer = lakas_tbpsa(
+            instrum, optimizer_name, input_data_file, tbpsa_naive,
+            args.tbpsa_initial_popsize, args.budget)
     elif optimizer_name == 'bayesopt':
-        if input_data_file is not None:
-            loaded_optimizer = ng.optimizers.ParametrizedBO()
-            optimizer = loaded_optimizer.load(input_data_file)
-            logger.info(f'bayesopt previous num_ask: {optimizer.num_ask}\n')
-        else:
-            bo_init_budget, bo_middle_point = None, False
-            optimizer = lakas_bayessian_opt(
-                instrum, optimizer_name, args.bo_initialization,
-                bo_init_budget, bo_middle_point, args.bo_utility_kind,
-                args.bo_utility_kappa, args.bo_utility_xi, args.budget,
-                args.bo_gp_param_alpha)
+        bo_init_budget, bo_middle_point = None, False
+        optimizer = lakas_bayessian_opt(
+            instrum, optimizer_name, input_data_file, args.bo_initialization,
+            bo_init_budget, bo_middle_point, args.bo_utility_kind,
+            args.bo_utility_kappa, args.bo_utility_xi, args.budget,
+            args.bo_gp_param_alpha)
     else:
         logger.exception(f'optimizer {optimizer_name} is not supported.')
         raise
