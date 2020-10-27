@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.12.0'
+__version__ = 'v0.13.0'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad']
 
 
@@ -302,6 +302,21 @@ def lakas_tbpsa(instrum, name, input_data_file, naive=True,
     return optimizer
 
 
+def lakas_spsa(instrum, name, input_data_file, budget=100):
+    """
+    Ref.: https://facebookresearch.github.io/nevergrad/optimizers_ref.html#nevergrad.optimization.optimizerlib.SPSA
+    """
+    if input_data_file is not None:
+        loaded_optimizer = ng.optimizers.SPSA(instrum, budget=budget)
+        optimizer = loaded_optimizer.load(input_data_file)
+        logger.info(f'spsa previous num_ask: {optimizer.num_ask}\n')
+    else:
+        logger.info(f'optimizer: {name}\n')
+        optimizer = ng.optimizers.SPSA(instrum, budget=budget)
+
+    return optimizer
+
+
 def lakas_bayessian_opt(instrum, name, input_data_file,
                         initialization='Hammersley',
                         init_budget=None, middle_point=False,
@@ -367,7 +382,7 @@ def main():
                         default=1000)
     parser.add_argument('--optimizer', required=False, type=str,
                         help='Type of optimizer to use, can be oneplusone or'
-                             ' tbpsa or bayesopt, default=oneplusone.',
+                             ' tbpsa or bayesopt, or spsa, default=oneplusone.',
                         default='oneplusone')
     parser.add_argument('--oneplusone-noise-handling', required=False, type=str,
                         help='Parameter for oneplusone optimizer, can be optimistic or random,\n'
@@ -430,6 +445,11 @@ def main():
                              'Example:\n'
                              '--optimizer bayesopt --bo-gp-param-alpha 0.05 ...',
                         default=0.001)
+    parser.add_argument('--spsa-scale', required=False, type=int,
+                        help='Parameter for spsa optimizer to increase/decrease param perturbation, default=500000.\n'
+                             'Example:\n'
+                             '--optimizer spsa --spsa-scale 600000 ...',
+                        default=500000)
     parser.add_argument('--budget', required=False, type=int,
                         help='Iterations to execute, default=1000.',
                         default=1000)
@@ -542,6 +562,8 @@ def main():
             bo_init_budget, bo_middle_point, args.bo_utility_kind,
             args.bo_utility_kappa, args.bo_utility_xi, args.budget,
             args.bo_gp_param_alpha)
+    elif optimizer_name == 'spsa':
+        optimizer = lakas_spsa(instrum, optimizer_name, input_data_file, args.budget)
     else:
         logger.exception(f'optimizer {optimizer_name} is not supported.')
         raise
@@ -575,9 +597,13 @@ def main():
                           hashmb=args.hash, common_param=common_param)
 
     # Start the optimization.
+    spsa_scale = args.spsa_scale
     for _ in range(optimizer.budget):
         x = optimizer.ask()
         loss = objective.run(**x.kwargs)
+
+        if optimizer_name == 'spsa':
+            loss = loss * spsa_scale
         optimizer.tell(x, loss)
 
         # Save optimization data to continue in the next session.
