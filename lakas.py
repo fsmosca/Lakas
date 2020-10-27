@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.11.0'
+__version__ = 'v0.12.0'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad']
 
 
@@ -41,7 +41,7 @@ logger.addHandler(consoleHandler)
 
 class Objective:
     def __init__(self, engine_file, input_param, init_param, opening_file,
-                 games_per_budget=100, depth=1000, concurrency=1,
+                 best_param, games_per_budget=100, depth=1000, concurrency=1,
                  base_time_sec=5, inc_time_sec=0.05, match_manager='cutechess',
                  variant='normal', best_result_threshold=0.5,
                  use_best_param=False, hashmb=64, common_param=None):
@@ -62,7 +62,13 @@ class Objective:
         self.common_param = common_param
 
         self.num_budget = 0
-        self.best_param = copy.deepcopy(init_param)
+
+        if len(best_param):
+            self.best_param = copy.deepcopy(best_param)
+            logger.info(f'Recommended param to try first from previous data: {self.best_param}')
+        else:
+            self.best_param = copy.deepcopy(init_param)
+
         self.best_min_value = 1.0 - best_result_threshold
         self.best_corrected_min_value = self.best_min_value
         self.best_budget_num = 1
@@ -511,18 +517,6 @@ def main():
     logger.info(f'tuning match move control: base_time_sec: {args.base_time_sec}, '
                 f'inc_time_sec: {args.inc_time_sec}, depth={args.depth}')
 
-    objective = Objective(args.engine, input_param, init_param,
-                          args.opening_file,
-                          games_per_budget=args.games_per_budget,
-                          depth=args.depth, concurrency=args.concurrency,
-                          base_time_sec=args.base_time_sec,
-                          inc_time_sec=args.inc_time_sec,
-                          match_manager=args.match_manager,
-                          variant=args.variant,
-                          best_result_threshold=args.best_result_threshold,
-                          use_best_param=args.use_best_param,
-                          hashmb=args.hash, common_param=common_param)
-
     # Prepare parameters to be optimized.
     arg = {}
     for k, v in input_param.items():
@@ -555,6 +549,30 @@ def main():
     # Save optimization log to file, append mode.
     nevergrad_logger = ng.callbacks.ParametersLogger(optimizer_log_file)
     optimizer.register_callback("tell", nevergrad_logger)
+
+    # Get a recommended param from loaded optimization data
+    # from previous optimization.
+    # Todo: Create own file and remember the best param and loss
+    # from previous optimization, so that we can continue from
+    # those data. Applicable only if --use-best-param flag
+    # is set to ON.
+    best_param = {}
+    if input_data_file is not None and args.use_best_param:
+        recommendation = optimizer.provide_recommendation()
+        recommendation_value = recommendation.value
+        best_param = recommendation_value[1]
+
+    objective = Objective(args.engine, input_param, init_param,
+                          args.opening_file, best_param,
+                          games_per_budget=args.games_per_budget,
+                          depth=args.depth, concurrency=args.concurrency,
+                          base_time_sec=args.base_time_sec,
+                          inc_time_sec=args.inc_time_sec,
+                          match_manager=args.match_manager,
+                          variant=args.variant,
+                          best_result_threshold=args.best_result_threshold,
+                          use_best_param=args.use_best_param,
+                          hashmb=args.hash, common_param=common_param)
 
     # Start the optimization.
     for _ in range(optimizer.budget):
