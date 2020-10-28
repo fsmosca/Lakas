@@ -27,9 +27,9 @@ A guide to install on [windows 10](https://github.com/fsmosca/Lakas/wiki/Windows
 
 ## D. Resuming a cancelled optimization
 Use the option  
-`--output-data-file oneplusone.dat ...`  
-to save the optimization data into the file `oneplusone.dat`. You may resume the optimization by using the option  
-`--input-data-file oneplusone.dat ...`
+`--output-data-file myopt.dat ...`  
+to save the optimization data into the file `myopt.dat`. You may resume the optimization by using the option  
+`--input-data-file myopt.dat ...`
 
 #### Note
 If you use oneplusone optimizer, you should use it to resume the oneplusone optimization.  
