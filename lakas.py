@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.13.0'
+__version__ = 'v0.14.0'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad']
 
 
@@ -317,6 +317,23 @@ def lakas_spsa(instrum, name, input_data_file, budget=100):
     return optimizer
 
 
+def lakas_cmaes(instrum, name, input_data_file, budget=100):
+    """
+    Ref.: https://facebookresearch.github.io/nevergrad/optimizers_ref.html#nevergrad.optimization.optimizerlib.ParametrizedCMA
+    """
+    # Continue from previous session by loading the previous data.
+    if input_data_file is not None:
+        loaded_optimizer = ng.optimizers.ParametrizedCMA()
+        optimizer = loaded_optimizer.load(input_data_file)
+        logger.info(f'cmaes previous num_ask: {optimizer.num_ask}\n')
+    else:
+        logger.info(f'optimizer: {name}\n')
+        my_opt = ng.optimizers.ParametrizedCMA()
+        optimizer = my_opt(parametrization=instrum, budget=budget)
+
+    return optimizer
+
+
 def lakas_bayessian_opt(instrum, name, input_data_file,
                         initialization='Hammersley',
                         init_budget=None, middle_point=False,
@@ -382,7 +399,7 @@ def main():
                         default=1000)
     parser.add_argument('--optimizer', required=False, type=str,
                         help='Type of optimizer to use, can be oneplusone or'
-                             ' tbpsa or bayesopt, or spsa, default=oneplusone.',
+                             ' tbpsa or bayesopt, or spsa, or cmaes, default=oneplusone.',
                         default='oneplusone')
     parser.add_argument('--oneplusone-noise-handling', required=False, type=str,
                         help='Parameter for oneplusone optimizer, can be optimistic or random,\n'
@@ -564,6 +581,8 @@ def main():
             args.bo_gp_param_alpha)
     elif optimizer_name == 'spsa':
         optimizer = lakas_spsa(instrum, optimizer_name, input_data_file, args.budget)
+    elif optimizer_name == 'cmaes':
+        optimizer = lakas_cmaes(instrum, optimizer_name, input_data_file, args.budget)
     else:
         logger.exception(f'optimizer {optimizer_name} is not supported.')
         raise
@@ -579,7 +598,8 @@ def main():
     # those data. Applicable only if --use-best-param flag
     # is set to ON.
     best_param = {}
-    if input_data_file is not None and args.use_best_param:
+    if (input_data_file is not None and args.use_best_param
+            and optimizer_name != 'cmaes'):
         recommendation = optimizer.provide_recommendation()
         recommendation_value = recommendation.value
         best_param = recommendation_value[1]
@@ -609,7 +629,8 @@ def main():
         # Save optimization data to continue in the next session.
         # --output-data-file opt_data.dat ...
         if output_data_file is not None:
-            optimizer.dump(output_data_file)
+            if optimizer_name != 'cmaes':
+                optimizer.dump(output_data_file)
 
     # Optimization done, get the best param.
     recommendation = optimizer.provide_recommendation()
