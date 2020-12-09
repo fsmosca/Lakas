@@ -8,7 +8,7 @@ Explore on sample [interactive plot](https://fsmosca.github.io/Lakas/).
 
 ## A. Setup
 ### Specific installation example
-A guide to install on [windows 10](https://github.com/fsmosca/Lakas/wiki/Windows-10-setup).
+A guide to setup Lakas on [virtual environment for windows 10](https://github.com/fsmosca/Lakas/wiki/Windows-10-setup).
 
 ### General installation guide
 * Install python 3.8 or later
