@@ -16,6 +16,7 @@ A guide to setup Lakas on [virtual environment for windows 10](https://github.co
   * pip install nevergrad
 * Install hiplot for plotting
   * pip install hiplot
+* Download [Lakas](https://github.com/fsmosca/Lakas/archive/main.zip)
   
 ### Help
 See [help page](https://github.com/fsmosca/Lakas/wiki/Help) in the wiki.
