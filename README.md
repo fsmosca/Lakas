@@ -22,8 +22,9 @@ A guide to setup Lakas on [virtual environment for windows 10](https://github.co
 * [OnePlusOne](https://facebookresearch.github.io/nevergrad/optimizers_ref.html#nevergrad.optimization.optimizerlib.ParametrizedOnePlusOne)
 * [TBPSA](https://facebookresearch.github.io/nevergrad/optimizers_ref.html#nevergrad.optimization.optimizerlib.ParametrizedTBPSA) (Test-based population-size adaptation)
 * [Bayessian Optimization](https://facebookresearch.github.io/nevergrad/optimizers_ref.html?highlight=logger#nevergrad.optimization.optimizerlib.ParametrizedBO)
-* [SPSA](https://facebookresearch.github.io/nevergrad/optimizers_ref.html?highlight=spsa#nevergrad.optimization.optimizerlib.SPSA)
-* [CMAES](https://facebookresearch.github.io/nevergrad/optimizers_ref.html#nevergrad.optimization.optimizerlib.ParametrizedCMA)
+* [SPSA](https://facebookresearch.github.io/nevergrad/optimizers_ref.html?highlight=spsa#nevergrad.optimization.optimizerlib.SPSA) (Simultaneous Perturbation Stochastic Approximation)
+* [CMAES](https://facebookresearch.github.io/nevergrad/optimizers_ref.html#nevergrad.optimization.optimizerlib.ParametrizedCMA) (Covariance Matrix Adaptation Evolution Strategy)
+* [NGOpt](https://facebookresearch.github.io/nevergrad/optimizers_ref.html#nevergrad.optimization.optimizerlib.NGOpt) and [article](https://arxiv.org/pdf/2004.14014.pdf)
 
 
 ## C. Sample optimization
