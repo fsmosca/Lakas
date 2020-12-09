@@ -17,6 +17,9 @@ A guide to setup Lakas on [virtual environment for windows 10](https://github.co
 * Install hiplot for plotting
   * pip install hiplot
   
+### Help
+See [help page](https://github.com/fsmosca/Lakas/wiki/Help) in the wiki.
+  
 
 ## B. Supported NeverGrad Optimizers
 * [OnePlusOne](https://facebookresearch.github.io/nevergrad/optimizers_ref.html#nevergrad.optimization.optimizerlib.ParametrizedOnePlusOne)
