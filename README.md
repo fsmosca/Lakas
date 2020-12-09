@@ -1,7 +1,7 @@
 # Lakas
 Game parameter optimizer using nevergrad framework.
 
-Explore on sample [interactive plot](https://fsmosca.github.io/Lakas/).
+Explore on sample [interactive plot](https://fsmosca.github.io/Lakas/) once an optimization session is done.
 
 ![Sample plot](https://i.imgur.com/fVPN366.png)
 
