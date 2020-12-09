@@ -19,6 +19,7 @@ A guide to install on [windows 10](https://github.com/fsmosca/Lakas/wiki/Windows
 * [TBPSA](https://facebookresearch.github.io/nevergrad/optimizers_ref.html#nevergrad.optimization.optimizerlib.ParametrizedTBPSA) (Test-based population-size adaptation)
 * [Bayessian Optimization](https://facebookresearch.github.io/nevergrad/optimizers_ref.html?highlight=logger#nevergrad.optimization.optimizerlib.ParametrizedBO)
 * [SPSA](https://facebookresearch.github.io/nevergrad/optimizers_ref.html?highlight=spsa#nevergrad.optimization.optimizerlib.SPSA)
+* [CMAES](https://facebookresearch.github.io/nevergrad/optimizers_ref.html#nevergrad.optimization.optimizerlib.ParametrizedCMA)
 
 
 ## C. Sample optimization
