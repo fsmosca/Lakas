@@ -18,11 +18,18 @@ A guide to setup Lakas on [virtual environment for windows 10](https://github.co
   * pip install hiplot
 * Download [Lakas](https://github.com/fsmosca/Lakas/archive/main.zip)
   
+## B. Command line
+
 ### Help
+`python lakas.py -h`  
 See [help page](https://github.com/fsmosca/Lakas/wiki/Help) in the wiki.
+
+### Saving hiplot plot
+`python lakas.py --optimizer-log-file opt_oneplusone.txt ...`  
+After the optimization, plots will be saved in `opt_oneplusone.txt.html file.`
   
 
-## B. Supported NeverGrad Optimizers
+## C. Supported NeverGrad Optimizers
 * [OnePlusOne](https://facebookresearch.github.io/nevergrad/optimizers_ref.html#nevergrad.optimization.optimizerlib.ParametrizedOnePlusOne)
 * [TBPSA](https://facebookresearch.github.io/nevergrad/optimizers_ref.html#nevergrad.optimization.optimizerlib.ParametrizedTBPSA) (Test-based population-size adaptation)
 * [Bayessian Optimization](https://facebookresearch.github.io/nevergrad/optimizers_ref.html?highlight=logger#nevergrad.optimization.optimizerlib.ParametrizedBO)
@@ -31,11 +38,11 @@ See [help page](https://github.com/fsmosca/Lakas/wiki/Help) in the wiki.
 * [NGOpt](https://facebookresearch.github.io/nevergrad/optimizers_ref.html#nevergrad.optimization.optimizerlib.NGOpt) and [article](https://arxiv.org/pdf/2004.14014.pdf)
 
 
-## C. Sample optimization
+## D. Sample optimization
 * [Optimization comparison](https://github.com/fsmosca/Lakas/wiki/Optimization-Comparison)
 
 
-## D. Resuming a cancelled optimization
+## E. Resuming a cancelled optimization
 Use the option  
 `--output-data-file myopt.dat ...`  
 to save the optimization data into the file `myopt.dat`. You may resume the optimization by using the option  
@@ -54,7 +61,7 @@ The 2 budgets stored in `oneplusone.dat` are still there and new budgets will be
 If your optimizer is tbpsa save it to a different file.  
 `python lakas.py --output-data-file tbpsa.dat --optimizer tbpsa ...`  
 
-## E. Credits
+## F. Credits
 * [NeverGrad](https://github.com/facebookresearch/nevergrad)
 * [Cutechess](https://github.com/cutechess/cutechess)
 * [Stockfish](https://stockfishchess.org/)
