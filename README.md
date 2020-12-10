@@ -27,6 +27,17 @@ See [help page](https://github.com/fsmosca/Lakas/wiki/Help) in the wiki.
 ### Saving hiplot plot
 `python lakas.py --optimizer-log-file opt_oneplusone.txt ...`  
 After the optimization, plots will be saved in `opt_oneplusone.txt.html file.`
+
+### Parameter Input
+Given a uci engine with uci option:  
+  * option name mThreatByKing type spin default 24 min 0 max 400
+  * option name mThreatByPawnPush type spin default 48 min 0 max 400
+
+```
+python lakas.py --input-param "{'mThreatByKing': {'init': 24, 'lower': 0, 'upper': 400}, 'mThreatByPawnPush': {'init': 48, 'lower': 0, 'upper': 400}}"
+```
+
+
   
 
 ## C. Supported NeverGrad Optimizers
