@@ -1,5 +1,5 @@
 # Lakas
-Game parameter optimizer using nevergrad framework.
+Game parameter optimizer using [nevergrad](https://github.com/facebookresearch/nevergrad) framework.
 
 Explore on sample [interactive plot](https://fsmosca.github.io/Lakas/) once an optimization session is done.
 
