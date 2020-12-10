@@ -5,6 +5,10 @@ Explore on sample [interactive plot](https://fsmosca.github.io/Lakas/) once an o
 
 ![Sample plot](https://i.imgur.com/fVPN366.png)
 
+### Optimization overview
+We run an engine vs engine match of 1000 games or so, one engine is called the `test_engine` and the other is called `base_engine`. The base_engine will use the default parameter values while the test_engine will use the parameter values that are suggested by the optimizer. Match result is (wins + draws/2) / games. If the result is 0.55 in favor of the test_engine, that means that the parameters suggested by the optimizer is better than the default. We then report back this result to the optimizer as `1 - 0.55` or
+0.45 since we are minimizing. All match result should be reported to the optimizer. In the next match we will ask another parameter values to try for the test_engine then play it against the base_engine. This process continues until we reach the maximum budgets.
+
 
 ## A. Setup
 ### Specific installation example
