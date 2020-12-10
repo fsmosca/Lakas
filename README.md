@@ -34,7 +34,7 @@ Given a uci engine with uci option:
   * option name mThreatByPawnPush type spin default 48 min 0 max 400
 
 ```
-python lakas.py --input-param "{'mThreatByKing': {'init': 24, 'lower': 0, 'upper': 400}, 'mThreatByPawnPush': {'init': 48, 'lower': 0, 'upper': 400}}"
+python lakas.py --input-param "{'mThreatByKing': {'init': 24, 'lower': 0, 'upper': 400}, 'mThreatByPawnPush': {'init': 48, 'lower': 0, 'upper': 400}}" ...
 ```
 
 
