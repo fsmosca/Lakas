@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.15.0'
+__version__ = 'v0.15.1'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad', 'teytaud']
 
 
@@ -321,6 +321,11 @@ def lakas_cmaes(instrum, name, input_data_file, budget=100):
     """
     Ref.: https://facebookresearch.github.io/nevergrad/optimizers_ref.html#nevergrad.optimization.optimizerlib.ParametrizedCMA
     """
+    # Verify if file really exists.
+    path = Path(input_data_file)
+    if not path.is_file():
+        input_data_file = None
+
     # Continue from previous session by loading the previous data.
     if input_data_file is not None:
         loaded_optimizer = ng.optimizers.ParametrizedCMA()
