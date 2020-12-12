@@ -19,7 +19,7 @@ jedi==0.17.2
 Jinja2==2.11.2
 joblib==0.17.0
 MarkupSafe==1.1.1
-nevergrad==0.4.2.post2
+nevergrad==0.4.2.post5
 numpy==1.19.2
 packaging==20.4
 parso==0.7.1
