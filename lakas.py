@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.15.1'
+__version__ = 'v0.16.0'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad', 'teytaud']
 
 
@@ -321,11 +321,6 @@ def lakas_cmaes(instrum, name, input_data_file, budget=100):
     """
     Ref.: https://facebookresearch.github.io/nevergrad/optimizers_ref.html#nevergrad.optimization.optimizerlib.ParametrizedCMA
     """
-    # Verify if file really exists.
-    path = Path(input_data_file)
-    if not path.is_file():
-        input_data_file = None
-
     # Continue from previous session by loading the previous data.
     if input_data_file is not None:
         loaded_optimizer = ng.optimizers.ParametrizedCMA()
@@ -382,11 +377,6 @@ def lakas_ngopt(instrum, name, input_data_file, budget=100):
         https://facebookresearch.github.io/nevergrad/optimizers_ref.html#nevergrad.optimization.optimizerlib.NGOpt
         https://arxiv.org/pdf/2004.14014.pdf
     """
-    # Verify if file really exists.
-    path = Path(input_data_file)
-    if not path.is_file():
-        input_data_file = None
-
     # Continue from previous session by loading the previous data.
     if input_data_file is not None:
         loaded_optimizer = ng.optimizers.NGOpt(instrum, budget=budget)
@@ -590,6 +580,11 @@ def main():
     instrum = ng.p.Instrumentation(**arg)
     logger.info(f'parameter dimension: {instrum.dimension}')
 
+    if input_data_file is not None:
+        path = Path(input_data_file)
+        if not path.is_file():
+            input_data_file = None
+
     # Define optimizer.
     if optimizer_name == 'oneplusone':
         optimizer = lakas_oneplusone(
@@ -628,8 +623,7 @@ def main():
     # those data. Applicable only if --use-best-param flag
     # is set to ON.
     best_param = {}
-    if (input_data_file is not None and args.use_best_param
-            and optimizer_name != 'cmaes'):
+    if input_data_file is not None and args.use_best_param:
         recommendation = optimizer.provide_recommendation()
         recommendation_value = recommendation.value
         best_param = recommendation_value[1]
@@ -659,8 +653,7 @@ def main():
         # Save optimization data to continue in the next session.
         # --output-data-file opt_data.dat ...
         if output_data_file is not None:
-            if optimizer_name != 'cmaes':
-                optimizer.dump(output_data_file)
+            optimizer.dump(output_data_file)
 
     # Optimization done, get the best param.
     recommendation = optimizer.provide_recommendation()
