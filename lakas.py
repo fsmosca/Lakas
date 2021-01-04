@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.16.0'
+__version__ = 'v0.17.0'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad', 'teytaud']
 
 
@@ -41,10 +41,11 @@ logger.addHandler(consoleHandler)
 
 class Objective:
     def __init__(self, engine_file, input_param, init_param, opening_file,
-                 best_param, games_per_budget=100, depth=1000, concurrency=1,
-                 base_time_sec=5, inc_time_sec=0.05, match_manager='cutechess',
-                 variant='normal', best_result_threshold=0.5,
-                 use_best_param=False, hashmb=64, common_param=None):
+                 opening_file_format, best_param, games_per_budget=100,
+                 depth=1000, concurrency=1, base_time_sec=5, inc_time_sec=0.05,
+                 match_manager='cutechess', variant='normal',
+                 best_result_threshold=0.5, use_best_param=False, hashmb=64,
+                 common_param=None):
         self.engine_file = engine_file
         self.input_param = input_param
         self.init_param = init_param
@@ -54,6 +55,7 @@ class Objective:
         self.base_time_sec = base_time_sec
         self.inc_time_sec = inc_time_sec
         self.opening_file = opening_file
+        self.opening_file_format = opening_file_format
         self.match_manager = match_manager
         self.variant = variant
         self.best_result_threshold = best_result_threshold
@@ -122,7 +124,8 @@ class Objective:
             logger.info(f'recommended vs init')
 
         result = engine_match(self.engine_file, test_options, base_options,
-                              self.opening_file, games=self.games_per_budget,
+                              self.opening_file, self.opening_file_format,
+                              games=self.games_per_budget,
                               depth=self.depth, concurrency=self.concurrency,
                               base_time_sec=self.base_time_sec,
                               inc_time_sec=self.inc_time_sec,
@@ -191,8 +194,8 @@ def read_result(line: str, match_manager) -> float:
 
 
 def get_match_commands(engine_file, test_options, base_options,
-                       opening_file, games, depth, concurrency,
-                       base_time_sec, inc_time_sec, match_manager,
+                       opening_file, opening_file_format, games, depth,
+                       concurrency, base_time_sec, inc_time_sec, match_manager,
                        variant, hashmb):
     if match_manager == 'cutechess':
         tour_manager = Path(Path.cwd(), './tourney_manager/cutechess/cutechess-cli.exe')
@@ -205,20 +208,22 @@ def get_match_commands(engine_file, test_options, base_options,
 
     command = f' -concurrency {concurrency}'
     command += ' -tournament round-robin'
-    command += f' -pgnout {pgn_output}'
 
     if variant != 'normal':
         command += f' -variant {variant}'
 
     if match_manager == 'cutechess':
+        command += f' -pgnout {pgn_output} fi'
         command += f' -each tc=0/0:{base_time_sec}+{inc_time_sec} depth={depth}'
         command += f' -engine cmd={engine_file} name={test_name} {test_options} proto=uci option.Hash={hashmb}'
         command += f' -engine cmd={engine_file} name={base_name} {base_options} proto=uci option.Hash={hashmb}'
         command += f' -rounds {games//2} -games 2 -repeat 2'
-        command += f' -openings file={opening_file} order=random format=epd'
+        command += ' -recover'
+        command += f' -openings file={opening_file} order=random format={opening_file_format}'
         command += ' -resign movecount=6 score=700 twosided=true'
         command += ' -draw movenumber=30 movecount=6 score=1'
     else:
+        command += f' -pgnout {pgn_output}'
         if depth != 1000:
             command += f' -each tc=0/0:{base_time_sec}+{inc_time_sec} depth={depth}'
         else:
@@ -232,14 +237,15 @@ def get_match_commands(engine_file, test_options, base_options,
 
 
 def engine_match(engine_file, test_options, base_options, opening_file,
-                 games=10, depth=1000, concurrency=1, base_time_sec=5,
-                 inc_time_sec=0.05, match_manager='cutechess',
+                 opening_file_format, games=10, depth=1000, concurrency=1,
+                 base_time_sec=5, inc_time_sec=0.05, match_manager='cutechess',
                  variant='normal', hashmb=64) -> float:
     result = ''
 
     tour_manager, command = get_match_commands(
-        engine_file, test_options, base_options, opening_file, games, depth,
-        concurrency, base_time_sec, inc_time_sec, match_manager, variant, hashmb)
+        engine_file, test_options, base_options, opening_file,
+        opening_file_format, games, depth, concurrency, base_time_sec,
+        inc_time_sec, match_manager, variant, hashmb)
 
     # Execute the command line to start the match.
     process = Popen(str(tour_manager) + command, stdout=PIPE, text=True)
@@ -510,7 +516,9 @@ def main():
                         help='Match manager name, can be cutechess or duel, default=cutechess.',
                         default='cutechess')
     parser.add_argument('--opening-file', required=True, type=str,
-                        help='Start opening filename in epd format.')
+                        help='Start opening filename in pgn or epd format.')
+    parser.add_argument('--opening-file-format', required=True, type=str,
+                        help='Opening format can be epd or pgn.')
     parser.add_argument('--variant', required=False, type=str,
                         help='Game variant, default=normal',
                         default='normal')
@@ -629,8 +637,8 @@ def main():
         best_param = recommendation_value[1]
 
     objective = Objective(args.engine, input_param, init_param,
-                          args.opening_file, best_param,
-                          games_per_budget=args.games_per_budget,
+                          args.opening_file, args.opening_file_format,
+                          best_param, games_per_budget=args.games_per_budget,
                           depth=args.depth, concurrency=args.concurrency,
                           base_time_sec=args.base_time_sec,
                           inc_time_sec=args.inc_time_sec,
