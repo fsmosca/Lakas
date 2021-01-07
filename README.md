@@ -41,9 +41,6 @@ Given a uci engine with uci option:
 python lakas.py --input-param "{'mThreatByKing': {'init': 24, 'lower': 0, 'upper': 400}, 'mThreatByPawnPush': {'init': 48, 'lower': 0, 'upper': 400}}" ...
 ```
 
-
-  
-
 ## C. Supported NeverGrad Optimizers
 * [OnePlusOne](https://facebookresearch.github.io/nevergrad/optimizers_ref.html#nevergrad.optimization.optimizerlib.ParametrizedOnePlusOne)
 * [TBPSA](https://facebookresearch.github.io/nevergrad/optimizers_ref.html#nevergrad.optimization.optimizerlib.ParametrizedTBPSA) (Test-based population-size adaptation)
@@ -53,7 +50,8 @@ python lakas.py --input-param "{'mThreatByKing': {'init': 24, 'lower': 0, 'upper
 * [NGOpt](https://facebookresearch.github.io/nevergrad/optimizers_ref.html#nevergrad.optimization.optimizerlib.NGOpt) and [article](https://arxiv.org/pdf/2004.14014.pdf)
 
 
-## D. Sample optimization
+## D. Sample optimization sessions
+* [Search and Evaluation optimization](https://github.com/fsmosca/Lakas/wiki/Search-and-Evaluation-parameter-Optimization)
 * [Optimization comparison](https://github.com/fsmosca/Lakas/wiki/Optimization-Comparison)
 
 
