@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.18.0'
+__version__ = 'v0.18.1'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad', 'teytaud']
 
 
@@ -119,7 +119,7 @@ class Objective:
 
         # optimistic for non-deterministic and average for deterministic.
         if not self.is_obj_deterministic:
-            curr_best_loss = opt_curr_best_value["optimistic"].mean
+            curr_best_loss = opt_curr_best_value["pessimistic"].mean
         else:
             curr_best_loss = opt_curr_best_value["average"].mean
         logger.info(f'best loss: {curr_best_loss}')
