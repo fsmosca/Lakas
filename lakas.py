@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.17.0'
+__version__ = 'v0.18.0'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad', 'teytaud']
 
 
@@ -40,12 +40,13 @@ logger.addHandler(consoleHandler)
 
 
 class Objective:
-    def __init__(self, engine_file, input_param, init_param, opening_file,
+    def __init__(self, optimizer, engine_file, input_param, init_param, opening_file,
                  opening_file_format, best_param, games_per_budget=100,
                  depth=1000, concurrency=1, base_time_sec=5, inc_time_sec=0.05,
                  match_manager='cutechess', variant='normal',
                  best_result_threshold=0.5, use_best_param=False, hashmb=64,
-                 common_param=None):
+                 common_param=None, is_obj_deterministic=False):
+        self.optimizer = optimizer
         self.engine_file = engine_file
         self.input_param = input_param
         self.init_param = init_param
@@ -62,8 +63,7 @@ class Objective:
         self.use_best_param = use_best_param
         self.hashmb = hashmb
         self.common_param = common_param
-
-        self.num_budget = 0
+        self.is_obj_deterministic = is_obj_deterministic
 
         if len(best_param):
             self.best_param = copy.deepcopy(best_param)
@@ -73,13 +73,16 @@ class Objective:
 
         self.best_min_value = 1.0 - best_result_threshold
         self.best_corrected_min_value = self.best_min_value
-        self.best_budget_num = 1
 
         self.test_param = {}
 
     def run(self, **param):
-        self.num_budget += 1
-        logger.info(f'budget: {self.num_budget}')
+
+        recommendation = self.optimizer.provide_recommendation()
+        opt_best_param = recommendation.value
+        opt_curr_best_value = self.optimizer.current_bests
+
+        logger.info(f'budget: {self.optimizer.num_ask}')
 
         # Options for test engine.
         test_options = ''
@@ -112,7 +115,15 @@ class Objective:
 
         base_options = base_options.rstrip()
 
-        logger.info(f'best param: {self.best_param}')
+        logger.info(f'best param: {opt_best_param[1]}')
+
+        # optimistic for non-deterministic and average for deterministic.
+        if not self.is_obj_deterministic:
+            curr_best_loss = opt_curr_best_value["optimistic"].mean
+        else:
+            curr_best_loss = opt_curr_best_value["average"].mean
+        logger.info(f'best loss: {curr_best_loss}')
+
         logger.info(f'init param: {self.init_param}')
 
         if self.common_param is not None:
@@ -136,16 +147,13 @@ class Objective:
 
         logger.info(f'actual result: {result:0.5f} @{self.games_per_budget} games,'
                     f' minimized result: {min_res:0.5f},'
-                    ' point of view: recommended')
+                    ' point of view: recommended\n')
 
         # If optimizer param vs init param. use_best_param=False by default.
         if not self.use_best_param:
             if min_res <= self.best_min_value:
-                # Just update for display purposes.
                 self.best_min_value = min_res
                 self.best_param = copy.deepcopy(self.test_param)
-                self.best_budget_num = self.num_budget
-            best_loss = self.best_min_value
         # Else if optimizer param vs best param
         else:
             if min_res <= 1.0 - self.best_result_threshold:
@@ -154,10 +162,6 @@ class Objective:
                 self.best_corrected_min_value = self.best_corrected_min_value - (1.0 - min_res) * 0.001
                 min_res = self.best_corrected_min_value
                 self.best_param = copy.deepcopy(self.test_param)
-                self.best_budget_num = self.num_budget
-            best_loss = self.best_corrected_min_value
-
-        logger.info(f'best loss: {best_loss}\n')
 
         return min_res
 
@@ -636,7 +640,7 @@ def main():
         recommendation_value = recommendation.value
         best_param = recommendation_value[1]
 
-    objective = Objective(args.engine, input_param, init_param,
+    objective = Objective(optimizer, args.engine, input_param, init_param,
                           args.opening_file, args.opening_file_format,
                           best_param, games_per_budget=args.games_per_budget,
                           depth=args.depth, concurrency=args.concurrency,
