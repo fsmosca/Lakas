@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.20.0'
+__version__ = 'v0.21.0'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad', 'teytaud']
 
 
@@ -45,7 +45,7 @@ class Objective:
                  depth=1000, concurrency=1, base_time_sec=5, inc_time_sec=0.05,
                  match_manager='cutechess', variant='normal',
                  best_result_threshold=0.5, use_best_param=False, hashmb=64,
-                 common_param=None, is_obj_deterministic=False):
+                 common_param=None, deterministic_function=False):
         self.optimizer = optimizer
         self.engine_file = engine_file
         self.input_param = input_param
@@ -63,7 +63,7 @@ class Objective:
         self.use_best_param = use_best_param
         self.hashmb = hashmb
         self.common_param = common_param
-        self.is_obj_deterministic = is_obj_deterministic
+        self.deterministic_function = deterministic_function
 
         if len(best_param):
             self.best_param = copy.deepcopy(best_param)
@@ -118,7 +118,7 @@ class Objective:
         logger.info(f'best param: {opt_best_param[1]}')
 
         # optimistic for non-deterministic and average for deterministic.
-        if not self.is_obj_deterministic:
+        if not self.deterministic_function:
             curr_best_loss = opt_curr_best_value["pessimistic"].mean
         else:
             curr_best_loss = opt_curr_best_value["average"].mean
@@ -644,7 +644,8 @@ def main():
                           variant=args.variant,
                           best_result_threshold=best_result_threshold,
                           use_best_param=use_best_param,
-                          hashmb=args.hash, common_param=common_param)
+                          hashmb=args.hash, common_param=common_param,
+                          deterministic_function=deterministic_function)
 
     # Start the optimization.
     spsa_scale = args.spsa_scale
