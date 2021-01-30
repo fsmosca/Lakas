@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.18.1'
+__version__ = 'v0.18.2'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad', 'teytaud']
 
 
@@ -149,16 +149,10 @@ class Objective:
                     f' minimized result: {min_res:0.5f},'
                     ' point of view: recommended\n')
 
-        # If optimizer param vs init param. use_best_param=False by default.
-        if not self.use_best_param:
-            if min_res <= self.best_min_value:
-                self.best_min_value = min_res
-                self.best_param = copy.deepcopy(self.test_param)
-        # Else if optimizer param vs best param
-        else:
+        # Modify the loss that is reported to the optimizer as
+        # the base engine will be using the current best param.
+        if self.use_best_param:
             if min_res <= 1.0 - self.best_result_threshold:
-                # Modify the loss that is reported to the optimizer as
-                # the base engine will be using the current best param.
                 self.best_corrected_min_value = self.best_corrected_min_value - (1.0 - min_res) * 0.001
                 min_res = self.best_corrected_min_value
                 self.best_param = copy.deepcopy(self.test_param)
