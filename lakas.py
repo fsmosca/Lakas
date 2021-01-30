@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.18.2'
+__version__ = 'v0.19.0'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad', 'teytaud']
 
 
@@ -498,18 +498,6 @@ def main():
     parser.add_argument('--games-per-budget', required=False, type=int,
                         help='Number of games per iteration, default=100.\n'
                              'This should be even number.', default=100)
-    parser.add_argument('--best-result-threshold', required=False, type=float,
-                        help='When match result is this number or more, update'
-                             ' the best param, default=0.5.\n'
-                             'When the flag --use-best-param is enabled,'
-                             ' the best param will be used by the\n'
-                             'base engine against the test engine that'
-                             ' uses the param from the optimizer.',
-                        default=0.5)
-    parser.add_argument('--use-best-param', action='store_true',
-                        help='Use best param for the base engine. A param'
-                             ' becomes best if it defeats or equalize the\n'
-                             'current best by --best-result-threshold value.')
     parser.add_argument('--match-manager', required=False, type=str,
                         help='Match manager name, can be cutechess or duel, default=cutechess.',
                         default='cutechess')
@@ -555,6 +543,8 @@ def main():
     input_data_file = args.input_data_file
     output_data_file = args.output_data_file  # Overwrite
     common_param = args.common_param
+    use_best_param = False
+    best_result_threshold = 0.5
 
     # Check the filename of the intended output data.
     if (output_data_file is not None and
@@ -629,7 +619,7 @@ def main():
     # those data. Applicable only if --use-best-param flag
     # is set to ON.
     best_param = {}
-    if input_data_file is not None and args.use_best_param:
+    if input_data_file is not None and use_best_param:
         recommendation = optimizer.provide_recommendation()
         recommendation_value = recommendation.value
         best_param = recommendation_value[1]
@@ -642,8 +632,8 @@ def main():
                           inc_time_sec=args.inc_time_sec,
                           match_manager=args.match_manager,
                           variant=args.variant,
-                          best_result_threshold=args.best_result_threshold,
-                          use_best_param=args.use_best_param,
+                          best_result_threshold=best_result_threshold,
+                          use_best_param=use_best_param,
                           hashmb=args.hash, common_param=common_param)
 
     # Start the optimization.
