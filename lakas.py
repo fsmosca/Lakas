@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.21.2'
+__version__ = 'v0.21.3'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad', 'teytaud']
 
 
@@ -278,7 +278,7 @@ def lakas_oneplusone(instrum, name, input_data_file,
     if input_data_file is not None:
         loaded_optimizer = ng.optimizers.ParametrizedOnePlusOne()
         optimizer = loaded_optimizer.load(input_data_file)
-        logger.info(f'oneplusone previous num_ask: {optimizer.num_ask}\n')
+        logger.info(f'optimizer: {name}, previous budget: {optimizer.num_ask}\n')
     else:
         # If input noise handling is a tuple, i.e "(optimistic, 0.01)".
         if '(' in noise_handling:
@@ -304,7 +304,7 @@ def lakas_tbpsa(instrum, name, input_data_file, naive=True,
     if input_data_file is not None:
         loaded_optimizer = ng.optimizers.ParametrizedTBPSA()
         optimizer = loaded_optimizer.load(input_data_file)
-        logger.info(f'tbpsa previous num_ask: {optimizer.num_ask}\n')
+        logger.info(f'optimizer: {name}, previous budget: {optimizer.num_ask}\n')
     else:
         logger.info(f'optimizer: {name}, naive: {naive}, initial_popsize: {initial_popsize}\n')
         my_opt = ng.optimizers.ParametrizedTBPSA(naive=naive,
@@ -321,7 +321,7 @@ def lakas_spsa(instrum, name, input_data_file, budget=100):
     if input_data_file is not None:
         loaded_optimizer = ng.optimizers.SPSA(instrum, budget=budget)
         optimizer = loaded_optimizer.load(input_data_file)
-        logger.info(f'spsa previous num_ask: {optimizer.num_ask}\n')
+        logger.info(f'optimizer: {name}, previous budget: {optimizer.num_ask}\n')
     else:
         logger.info(f'optimizer: {name}\n')
         optimizer = ng.optimizers.SPSA(instrum, budget=budget)
@@ -337,7 +337,7 @@ def lakas_cmaes(instrum, name, input_data_file, budget=100):
     if input_data_file is not None:
         loaded_optimizer = ng.optimizers.ParametrizedCMA()
         optimizer = loaded_optimizer.load(input_data_file)
-        logger.info(f'cmaes previous num_ask: {optimizer.num_ask}\n')
+        logger.info(f'optimizer: {name}, previous budget: {optimizer.num_ask}\n')
     else:
         logger.info(f'optimizer: {name}\n')
         my_opt = ng.optimizers.ParametrizedCMA()
@@ -357,7 +357,7 @@ def lakas_bayessian_opt(instrum, name, input_data_file,
     if input_data_file is not None:
         loaded_optimizer = ng.optimizers.ParametrizedBO()
         optimizer = loaded_optimizer.load(input_data_file)
-        logger.info(f'bayesopt previous num_ask: {optimizer.num_ask}\n')
+        logger.info(f'optimizer: {name}, previous budget: {optimizer.num_ask}\n')
     else:
         gp_param = {'alpha': gp_param_alpha, 'normalize_y': True,
                     'n_restarts_optimizer': 5, 'random_state': None}
@@ -393,7 +393,7 @@ def lakas_ngopt(instrum, name, input_data_file, budget=100):
     if input_data_file is not None:
         loaded_optimizer = ng.optimizers.NGOpt(instrum, budget=budget)
         optimizer = loaded_optimizer.load(input_data_file)
-        logger.info(f'ngopt previous num_ask: {optimizer.num_ask}\n')
+        logger.info(f'optimizer: {name}, previous budget: {optimizer.num_ask}\n')
     else:
         logger.info(f'optimizer: {name}\n')
         optimizer = ng.optimizers.NGOpt(parametrization=instrum, budget=budget)
