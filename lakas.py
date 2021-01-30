@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.21.1'
+__version__ = 'v0.21.2'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad', 'teytaud']
 
 
@@ -45,7 +45,8 @@ class Objective:
                  depth=1000, concurrency=1, base_time_sec=5, inc_time_sec=0.05,
                  match_manager='cutechess', variant='normal',
                  best_result_threshold=0.5, use_best_param=False, hashmb=64,
-                 common_param=None, deterministic_function=False):
+                 common_param=None, deterministic_function=False,
+                 optimizer_name=None, spsa_scale=500000):
         self.optimizer = optimizer
         self.engine_file = engine_file
         self.input_param = input_param
@@ -64,6 +65,8 @@ class Objective:
         self.hashmb = hashmb
         self.common_param = common_param
         self.deterministic_function = deterministic_function
+        self.optimizer_name = optimizer_name
+        self.spsa_scale = spsa_scale
 
         if len(best_param):
             self.best_param = copy.deepcopy(best_param)
@@ -122,6 +125,11 @@ class Objective:
             curr_best_loss = opt_curr_best_value["pessimistic"].mean
         else:
             curr_best_loss = opt_curr_best_value["average"].mean
+
+        # Scale down the spsa loss for display.
+        if self.optimizer_name == 'spsa':
+            curr_best_loss = curr_best_loss/self.spsa_scale
+
         logger.info(f'best loss: {curr_best_loss}')
 
         logger.info(f'init param: {self.init_param}')
@@ -548,6 +556,7 @@ def main():
     use_best_param = False
     best_result_threshold = 0.5
     deterministic_function = args.deterministic_function
+    spsa_scale = args.spsa_scale
 
     # Check the filename of the intended output data.
     if (output_data_file is not None and
@@ -645,7 +654,8 @@ def main():
                           best_result_threshold=best_result_threshold,
                           use_best_param=use_best_param,
                           hashmb=args.hash, common_param=common_param,
-                          deterministic_function=deterministic_function)
+                          deterministic_function=deterministic_function,
+                          optimizer_name=optimizer_name, spsa_scale=spsa_scale)
 
     # Start the optimization.
     for _ in range(optimizer.budget):
@@ -655,7 +665,7 @@ def main():
         # Scale up the loss for spsa optimizer to make
         # param value increment higher than 1,  default spsa_scale=500000.
         if optimizer_name == 'spsa':
-            loss = loss * args.spsa_scale
+            loss = loss * spsa_scale
 
         optimizer.tell(x, loss)
 
