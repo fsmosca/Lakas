@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.19.0'
+__version__ = 'v0.20.0'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad', 'teytaud']
 
 
@@ -533,6 +533,8 @@ def main():
                              'Make sure that this param is not included in the input-param.\n'
                              'Example:\n'
                              '--common-param \"{\'RookOpenFile\': 92, \'KnightOutpost\': 300}\"')
+    parser.add_argument('--deterministic-function', action='store_true',
+                        help='A flag to consider the objective function as deterministic.')
 
     args = parser.parse_args()
 
@@ -545,6 +547,7 @@ def main():
     common_param = args.common_param
     use_best_param = False
     best_result_threshold = 0.5
+    deterministic_function = args.deterministic_function
 
     # Check the filename of the intended output data.
     if (output_data_file is not None and
@@ -574,7 +577,14 @@ def main():
         arg.update({k: ng.p.Scalar(init=v['init'], lower=v['lower'],
                                    upper=v['upper']).set_integer_casting()})
     instrum = ng.p.Instrumentation(**arg)
+
+    # deterministic_function in Nevergrad default since
+    # nevergrad==0.4.3 is true. Lakas by default is false.
+    if not deterministic_function:
+        instrum.descriptors.deterministic_function = False
+
     logger.info(f'parameter dimension: {instrum.dimension}')
+    logger.info(f'deterministic function: {deterministic_function}')
 
     if input_data_file is not None:
         path = Path(input_data_file)
