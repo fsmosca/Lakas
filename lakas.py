@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.21.0'
+__version__ = 'v0.21.1'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad', 'teytaud']
 
 
@@ -648,13 +648,15 @@ def main():
                           deterministic_function=deterministic_function)
 
     # Start the optimization.
-    spsa_scale = args.spsa_scale
     for _ in range(optimizer.budget):
         x = optimizer.ask()
         loss = objective.run(**x.kwargs)
 
+        # Scale up the loss for spsa optimizer to make
+        # param value increment higher than 1,  default spsa_scale=500000.
         if optimizer_name == 'spsa':
-            loss = loss * spsa_scale
+            loss = loss * args.spsa_scale
+
         optimizer.tell(x, loss)
 
         # Save optimization data to continue in the next session.
