@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.21.3'
+__version__ = 'v0.22.0'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad', 'teytaud']
 
 
@@ -40,9 +40,10 @@ logger.addHandler(consoleHandler)
 
 
 class Objective:
-    def __init__(self, optimizer, engine_file, input_param, init_param, opening_file,
-                 opening_file_format, best_param, games_per_budget=100,
-                 depth=1000, concurrency=1, base_time_sec=5, inc_time_sec=0.05,
+    def __init__(self, optimizer, engine_file, input_param, init_param,
+                 opening_file, opening_file_format, best_param, best_loss,
+                 games_per_budget=100, depth=1000, concurrency=1,
+                 base_time_sec=5, inc_time_sec=0.05,
                  match_manager='cutechess', variant='normal',
                  best_result_threshold=0.5, use_best_param=False, hashmb=64,
                  common_param=None, deterministic_function=False,
@@ -52,6 +53,7 @@ class Objective:
         self.input_param = input_param
         self.init_param = init_param
         self.games_per_budget = games_per_budget
+        self.best_loss = best_loss
         self.depth = depth
         self.concurrency = concurrency
         self.base_time_sec = base_time_sec
@@ -70,12 +72,11 @@ class Objective:
 
         if len(best_param):
             self.best_param = copy.deepcopy(best_param)
-            logger.info(f'Recommended param to try first from previous data: {self.best_param}')
         else:
             self.best_param = copy.deepcopy(init_param)
 
-        self.best_min_value = 1.0 - best_result_threshold
-        self.best_corrected_min_value = self.best_min_value
+        if self.best_loss is None:
+            self.best_loss = 1.0 - best_result_threshold
 
         self.test_param = {}
 
@@ -160,10 +161,12 @@ class Objective:
         # Modify the loss that is reported to the optimizer as
         # the base engine will be using the current best param.
         if self.use_best_param:
-            if min_res <= 1.0 - self.best_result_threshold:
-                self.best_corrected_min_value = self.best_corrected_min_value - (1.0 - min_res) * 0.001
-                min_res = self.best_corrected_min_value
+            if min_res < 1.0 - self.best_result_threshold:
+                self.best_loss = self.best_loss - (1.0 - min_res) * 0.001
+                min_res = self.best_loss
                 self.best_param = copy.deepcopy(self.test_param)
+            else:
+                min_res = self.best_result_threshold + min_res * 0.0001
 
         return min_res
 
@@ -543,6 +546,18 @@ def main():
                              '--common-param \"{\'RookOpenFile\': 92, \'KnightOutpost\': 300}\"')
     parser.add_argument('--deterministic-function', action='store_true',
                         help='A flag to consider the objective function as deterministic.')
+    parser.add_argument('--use-best-param', action='store_true',
+                        help='Use best param for the base engine. A param'
+                             ' becomes best if it defeats the\n'
+                             'current best by --best-result-threshold value.')
+    parser.add_argument('--best-result-threshold', required=False, type=float,
+                        help='When match result is greater than this, update'
+                             ' the best param, default=0.5.\n'
+                             'Only applied when the flag --use-best-param is enabled,'
+                             ' the best param will be used by the\n'
+                             'base engine against the test engine that'
+                             ' uses the param from the optimizer.',
+                        default=0.5)
 
     args = parser.parse_args()
 
@@ -553,8 +568,8 @@ def main():
     input_data_file = args.input_data_file
     output_data_file = args.output_data_file  # Overwrite
     common_param = args.common_param
-    use_best_param = False
-    best_result_threshold = 0.5
+    use_best_param = args.use_best_param
+    best_result_threshold = args.best_result_threshold
     deterministic_function = args.deterministic_function
     spsa_scale = args.spsa_scale
 
@@ -594,6 +609,9 @@ def main():
 
     logger.info(f'parameter dimension: {instrum.dimension}')
     logger.info(f'deterministic function: {deterministic_function}')
+    logger.info(f'use best param: {use_best_param}')
+    if use_best_param:
+        logger.info(f'best result threshold: {best_result_threshold}')
 
     if input_data_file is not None:
         path = Path(input_data_file)
@@ -638,14 +656,32 @@ def main():
     # those data. Applicable only if --use-best-param flag
     # is set to ON.
     best_param = {}
-    if input_data_file is not None and use_best_param:
-        recommendation = optimizer.provide_recommendation()
-        recommendation_value = recommendation.value
-        best_param = recommendation_value[1]
+    best_loss = None
+
+    if use_best_param:
+        if optimizer.num_ask < 1:
+            best_loss = best_result_threshold - (1.0 - best_result_threshold) * 0.001
+            optimizer.tell(instrum, best_loss)
+            recommendation = optimizer.provide_recommendation()
+            recommendation_value = recommendation.value
+            best_param = recommendation_value[1]
+            curr_best_loss = optimizer.current_bests
+            best_loss = curr_best_loss["average"].mean
+
+            if output_data_file is not None:
+                optimizer.dump(output_data_file)
+
+        elif input_data_file is not None:
+            recommendation = optimizer.provide_recommendation()
+            recommendation_value = recommendation.value
+            best_param = recommendation_value[1]
+            curr_best_loss = optimizer.current_bests
+            best_loss = curr_best_loss["average"].mean
 
     objective = Objective(optimizer, args.engine, input_param, init_param,
                           args.opening_file, args.opening_file_format,
-                          best_param, games_per_budget=args.games_per_budget,
+                          best_param, best_loss,
+                          games_per_budget=args.games_per_budget,
                           depth=args.depth, concurrency=args.concurrency,
                           base_time_sec=args.base_time_sec,
                           inc_time_sec=args.inc_time_sec,
@@ -660,6 +696,7 @@ def main():
     # Start the optimization.
     for _ in range(optimizer.budget):
         x = optimizer.ask()
+
         loss = objective.run(**x.kwargs)
 
         # Scale up the loss for spsa optimizer to make
