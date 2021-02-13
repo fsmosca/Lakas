@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.23.2'
+__version__ = 'v0.23.3'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad', 'teytaud']
 
 
@@ -111,7 +111,7 @@ class Objective:
                  best_result_threshold=0.5, use_best_param=False, hashmb=64,
                  common_param=None, deterministic_function=False,
                  optimizer_name=None, spsa_scale=500000, proc_list=[],
-                 cutechess_debug=False):
+                 cutechess_debug=False, cutechess_wait=5000):
         self.optimizer = optimizer
         self.engine_file = engine_file
         self.input_param = input_param
@@ -146,6 +146,7 @@ class Objective:
 
         self.proc_list = proc_list
         self.cutechess_debug=cutechess_debug
+        self.cutechess_wait=cutechess_wait
 
     def run(self, **param):
 
@@ -223,7 +224,8 @@ class Objective:
                               inc_time_sec=self.inc_time_sec,
                               match_manager=self.match_manager,
                               variant=self.variant, hashmb=self.hashmb,
-                              cutechess_debug=self.cutechess_debug)
+                              cutechess_debug=self.cutechess_debug,
+                              cutechess_wait=self.cutechess_wait)
 
         min_res = 1.0 - result
 
@@ -282,7 +284,7 @@ def read_result(line: str, match_manager) -> float:
 def get_match_commands(engine_file, test_options, base_options,
                        opening_file, opening_file_format, games, depth,
                        concurrency, base_time_sec, inc_time_sec, match_manager,
-                       variant, hashmb, cutechess_debug):
+                       variant, hashmb, cutechess_debug, cutechess_wait):
     if match_manager == 'cutechess':
         tour_manager = Path(Path.cwd(), './tourney_manager/cutechess/cutechess-cli.exe')
     else:
@@ -305,6 +307,7 @@ def get_match_commands(engine_file, test_options, base_options,
         command += f' -engine cmd={engine_file} name={base_name} {base_options} proto=uci option.Hash={hashmb}'
         command += f' -rounds {games//2} -games 2 -repeat 2'
         command += ' -recover'
+        command += f' -wait {cutechess_wait}'
         command += f' -openings file={opening_file} order=random format={opening_file_format}'
         command += ' -resign movecount=6 score=700 twosided=true'
         command += ' -draw movenumber=30 movecount=6 score=1'
@@ -328,13 +331,15 @@ def get_match_commands(engine_file, test_options, base_options,
 def engine_match(engine_file, test_options, base_options, opening_file,
                  opening_file_format, games=10, depth=1000, concurrency=1,
                  base_time_sec=5, inc_time_sec=0.05, match_manager='cutechess',
-                 variant='normal', hashmb=64, cutechess_debug=False) -> float:
+                 variant='normal', hashmb=64, cutechess_debug=False,
+                 cutechess_wait=5000) -> float:
     result = ''
 
     tour_manager, command = get_match_commands(
         engine_file, test_options, base_options, opening_file,
         opening_file_format, games, depth, concurrency, base_time_sec,
-        inc_time_sec, match_manager, variant, hashmb, cutechess_debug)
+        inc_time_sec, match_manager, variant, hashmb, cutechess_debug,
+        cutechess_wait)
 
     # Execute the command line to start the match.
     process = Popen(str(tour_manager) + command, stdout=PIPE, text=True)
@@ -656,6 +661,11 @@ def main():
                         default=0.5)
     parser.add_argument('--cutechess-debug', action='store_true',
                         help='Enable -debug flag of cutechess-cli, this will output engine logging.')
+    parser.add_argument('--cutechess-wait', required=False, type=int,
+                        help='Sets the -wait N option of cutechess-cli,\n'
+                             'that is wait N milliseconds between games,\n'
+                             'default=5000 or 5s.',
+                        default=5000)
 
     args = parser.parse_args()
 
@@ -791,7 +801,8 @@ def main():
                           deterministic_function=deterministic_function,
                           optimizer_name=optimizer_name, spsa_scale=spsa_scale,
                           proc_list=proc_list,
-                          cutechess_debug=args.cutechess_debug)
+                          cutechess_debug=args.cutechess_debug,
+                          cutechess_wait=args.cutechess_wait)
 
     # Start the optimization.
     for _ in range(optimizer.budget):
