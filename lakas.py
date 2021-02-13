@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.23.1'
+__version__ = 'v0.23.2'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad', 'teytaud']
 
 
@@ -85,15 +85,21 @@ def log_cpu(proc_list, msg=''):
     if len(proc_list) < 1:
         return
 
-    os_name = platform.system()  # Linux, indows or ''
+    os_name = platform.system()  # Linux, Windows or ''
     num_threads = psutil.cpu_count(logical=True)
 
     for (p, pid, name) in proc_list:
+        mem_mbytes = p.memory_info()[0] / (1024 * 1024)  # rss, working set in windows resource monitor
         if os_name.lower() == 'windows':
             cpu_pct = p.cpu_percent(interval=None) / num_threads
         else:
             cpu_pct = p.cpu_percent(interval=None)
-        logger2.info(f'{msg:43s}, proc_id: {pid}, cpu_usage%: {cpu_pct:0.0f}, num_threads: {num_threads}, proc_name: {name}')
+        logger2.info(f'{msg:43s},'
+                     f' proc_id: {pid},'
+                     f' cpu_usage%: {cpu_pct:0.0f},'
+                     f' mem_mb: {mem_mbytes:0.0f},'
+                     f' num_threads: {num_threads},'
+                     f' proc_name: {name}')
 
 
 class Objective:
