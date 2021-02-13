@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.23.3'
+__version__ = 'v0.24.0'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad', 'teytaud']
 
 
@@ -106,7 +106,7 @@ class Objective:
     def __init__(self, optimizer, engine_file, input_param, init_param,
                  opening_file, opening_file_format, best_param, best_loss,
                  games_per_budget=100, depth=1000, concurrency=1,
-                 base_time_sec=5, inc_time_sec=0.05,
+                 base_time_sec=None, inc_time_sec=None,
                  match_manager='cutechess', variant='normal',
                  best_result_threshold=0.5, use_best_param=False, hashmb=64,
                  common_param=None, deterministic_function=False,
@@ -118,10 +118,18 @@ class Objective:
         self.init_param = init_param
         self.games_per_budget = games_per_budget
         self.best_loss = best_loss
-        self.depth = depth
         self.concurrency = concurrency
-        self.base_time_sec = base_time_sec
-        self.inc_time_sec = inc_time_sec
+
+        self.depth = int(depth) if depth is not None else depth
+        self.base_time_sec = int(base_time_sec) if base_time_sec is not None else base_time_sec
+        self.inc_time_sec = float(inc_time_sec) if inc_time_sec is not None else inc_time_sec
+
+        # Raise error if there are no or unsupported move control.
+        if self.base_time_sec is None and self.depth is None:
+            raise Exception('Error, missing time and depth control!')
+        elif self.base_time_sec is None and self.inc_time_sec is not None and self.depth is not None:
+            raise Exception('Error, not supported move control!')
+
         self.opening_file = opening_file
         self.opening_file_format = opening_file_format
         self.match_manager = match_manager
@@ -302,7 +310,21 @@ def get_match_commands(engine_file, test_options, base_options,
 
     if match_manager == 'cutechess':
         command += f' -pgnout {pgn_output} fi'
-        command += f' -each tc=0/0:{base_time_sec}+{inc_time_sec} depth={depth}'
+
+        # Set the move control.
+        if base_time_sec is not None and inc_time_sec is not None and depth is not None:
+            command += f' -each tc=0/0:{base_time_sec}+{inc_time_sec} depth={depth}'
+        elif base_time_sec is not None and inc_time_sec is not None:
+            command += f' -each tc=0/0:{base_time_sec}+{inc_time_sec}'
+        elif base_time_sec is not None:
+            command += f' -each tc=0/0:{base_time_sec}'
+        elif inc_time_sec is not None and depth is not None:
+            command += f' -each tc=0/0:{0}+{inc_time_sec} depth={depth}'
+        elif inc_time_sec is not None:
+            command += f' -each tc=0/0:{0}+{inc_time_sec}'
+        elif depth is not None:
+            command += f' -each tc=inf depth={depth}'
+
         command += f' -engine cmd={engine_file} name={test_name} {test_options} proto=uci option.Hash={hashmb}'
         command += f' -engine cmd={engine_file} name={base_name} {base_options} proto=uci option.Hash={hashmb}'
         command += f' -rounds {games//2} -games 2 -repeat 2'
@@ -314,9 +336,10 @@ def get_match_commands(engine_file, test_options, base_options,
 
         if cutechess_debug:
             command += ' -debug'
+    # duel.py match manager
     else:
         command += f' -pgnout {pgn_output}'
-        if depth != 1000:
+        if depth is not None:
             command += f' -each tc=0/0:{base_time_sec}+{inc_time_sec} depth={depth}'
         else:
             command += f' -each tc=0/0:{base_time_sec}+{inc_time_sec}'
@@ -329,8 +352,8 @@ def get_match_commands(engine_file, test_options, base_options,
 
 
 def engine_match(engine_file, test_options, base_options, opening_file,
-                 opening_file_format, games=10, depth=1000, concurrency=1,
-                 base_time_sec=5, inc_time_sec=0.05, match_manager='cutechess',
+                 opening_file_format, games=10, depth=None, concurrency=1,
+                 base_time_sec=None, inc_time_sec=None, match_manager='cutechess',
                  variant='normal', hashmb=64, cutechess_debug=False,
                  cutechess_wait=5000) -> float:
     result = ''
@@ -515,22 +538,16 @@ def main():
                         help='Engine filename or engine path and filename.')
     parser.add_argument('--hash', required=False, type=int,
                         help='Engine memory in MB, default=64.', default=64)
-    parser.add_argument('--base-time-sec', required=False, type=int,
-                        help='Base time in sec for time control, default=5.',
-                        default=5)
-    parser.add_argument('--inc-time-sec', required=False, type=float,
-                        help='Increment time in sec for time control, default=0.05.',
-                        default=0.05)
-    parser.add_argument('--depth', required=False, type=int,
+    parser.add_argument('--base-time-sec', required=False,
+                        help='Base time in sec for time control. If depth is not'
+                             ' defined this option should have a value.')
+    parser.add_argument('--inc-time-sec', required=False,
+                        help='Increment time in sec for time control.')
+    parser.add_argument('--depth', required=False,
                         help='The maximum search depth that the engine is'
-                             ' allowed, default=1000.\n'
+                             ' allowed.\n'
                              'Example:\n'
-                             '--depth 6 ...\n'
-                             'If depth is high say 24 and you want this depth\n'
-                             'to be always respected increase the base time'
-                             ' control.\n'
-                             'tuner.py --depth 24 --base-time-sec 300 ...',
-                        default=1000)
+                             '--depth 6 ...')
     parser.add_argument('--optimizer', required=False, type=str,
                         help='Type of optimizer to use, can be oneplusone or'
                              ' tbpsa or bayesopt, or spsa, or cmaes, or ngopt, default=oneplusone.',
