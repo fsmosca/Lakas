@@ -8,10 +8,11 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.22.0'
+__version__ = 'v0.23.0'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad', 'teytaud']
 
 
+import os
 import sys
 import argparse
 import ast
@@ -20,23 +21,79 @@ from collections import OrderedDict
 from subprocess import Popen, PIPE
 from pathlib import Path
 import logging
+import platform
 
 import nevergrad as ng
+import psutil
 
 
-logFormatter = logging.Formatter("%(asctime)s | %(levelname)-5.5s | %(message)s")
-logger = logging.getLogger('lakas tuner')
-logger.propagate = False
+log_formatter = logging.Formatter("%(asctime)s | %(levelname)-5.5s | %(message)s")
+log_formatter2 = logging.Formatter("%(asctime)s | %(process)6d | %(levelname)-5.5s | %(message)s")
 
-fileHandler = logging.FileHandler(filename='log_lakas.txt', mode='a')
-fileHandler.setLevel(logging.INFO)
-fileHandler.setFormatter(logFormatter)
-logger.addHandler(fileHandler)
 
-consoleHandler = logging.StreamHandler(sys.stdout)
-consoleHandler.setLevel(logging.DEBUG)
-consoleHandler.setFormatter(logFormatter)
-logger.addHandler(consoleHandler)
+def setup_logger(name, log_file, log_formatter, level=logging.INFO, console=False, mode='w'):
+    handler = logging.FileHandler(log_file, mode=mode)
+    handler.setFormatter(log_formatter)
+
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+    logger.addHandler(handler)
+
+    logger.propagate = False
+
+    if console:
+        consoleHandler = logging.StreamHandler(sys.stdout)
+        consoleHandler.setLevel(logging.DEBUG)
+        consoleHandler.setFormatter(log_formatter)
+        logger.addHandler(consoleHandler)
+
+    return logger
+
+
+logger = setup_logger(
+    'lakas_logger', 'lakas_log.txt', log_formatter,
+    level=logging.INFO, console=True, mode='a')
+
+
+logger2 = setup_logger(
+    'match_logger', 'lakas_match.txt', log_formatter2,
+    level=logging.INFO, console=False)
+
+
+def find_process_id_by_name(process_name):
+    process_object = []
+
+    #Iterate over the all the running process
+    for proc in psutil.process_iter():
+       try:
+           pinfo = proc.as_dict(attrs=['pid', 'name', 'create_time'])
+
+           # Check if process name contains the given name string.
+           if process_name.lower() in pinfo['name'].lower() :
+               process_object.append(pinfo)
+
+       except (psutil.NoSuchProcess, psutil.AccessDenied , psutil.ZombieProcess):
+           pass
+
+    return process_object
+
+
+def log_cpu(proc_list, msg=''):
+    """
+    proc_list = (proc, pid, name)
+    """
+    if len(proc_list) < 1:
+        return
+
+    os_name = platform.system()  # Linux, indows or ''
+    num_threads = psutil.cpu_count(logical=True)
+
+    for (p, pid, name) in proc_list:
+        if os_name.lower() == 'windows':
+            cpu_pct = p.cpu_percent(interval=None) / num_threads
+        else:
+            cpu_pct = p.cpu_percent(interval=None)
+        logger2.info(f'{msg:43s}, proc_id: {pid}, cpu_usage%: {cpu_pct:0.0f}, num_threads: {num_threads}, proc_name: {name}')
 
 
 class Objective:
@@ -47,7 +104,7 @@ class Objective:
                  match_manager='cutechess', variant='normal',
                  best_result_threshold=0.5, use_best_param=False, hashmb=64,
                  common_param=None, deterministic_function=False,
-                 optimizer_name=None, spsa_scale=500000):
+                 optimizer_name=None, spsa_scale=500000, proc_list=[]):
         self.optimizer = optimizer
         self.engine_file = engine_file
         self.input_param = input_param
@@ -80,9 +137,14 @@ class Objective:
 
         self.test_param = {}
 
+        self.proc_list = proc_list
+
     def run(self, **param):
 
         recommendation = self.optimizer.provide_recommendation()
+
+        log_cpu(self.proc_list, msg=f'budget {self.optimizer.num_ask}, after asking recommendation')
+
         opt_best_param = recommendation.value
         opt_curr_best_value = self.optimizer.current_bests
 
@@ -143,6 +205,8 @@ class Objective:
         else:
             logger.info(f'recommended vs init')
 
+        log_cpu(self.proc_list, msg='before a match starts')
+
         result = engine_match(self.engine_file, test_options, base_options,
                               self.opening_file, self.opening_file_format,
                               games=self.games_per_budget,
@@ -153,6 +217,8 @@ class Objective:
                               variant=self.variant, hashmb=self.hashmb)
 
         min_res = 1.0 - result
+
+        log_cpu(self.proc_list, msg='after the match')
 
         logger.info(f'actual result: {result:0.5f} @{self.games_per_budget} games,'
                     f' minimized result: {min_res:0.5f},'
@@ -167,6 +233,8 @@ class Objective:
                 self.best_param = copy.deepcopy(self.test_param)
             else:
                 min_res = self.best_result_threshold + min_res * 0.0001
+
+        log_cpu(self.proc_list, msg='just before sending the result to optimizer')
 
         return min_res
 
@@ -228,6 +296,7 @@ def get_match_commands(engine_file, test_options, base_options,
         command += f' -engine cmd={engine_file} name={base_name} {base_options} proto=uci option.Hash={hashmb}'
         command += f' -rounds {games//2} -games 2 -repeat 2'
         command += ' -recover'
+        command += ' -debug'
         command += f' -openings file={opening_file} order=random format={opening_file_format}'
         command += ' -resign movecount=6 score=700 twosided=true'
         command += ' -draw movenumber=30 movecount=6 score=1'
@@ -260,6 +329,7 @@ def engine_match(engine_file, test_options, base_options, opening_file,
     process = Popen(str(tour_manager) + command, stdout=PIPE, text=True)
     for eline in iter(process.stdout.readline, ''):
         line = eline.strip()
+        logger2.info(line)
         if line.startswith(f'Score of {"test"} vs {"base"}'):
             result = read_result(line, match_manager)
             if 'Finished match' in line:
@@ -405,6 +475,21 @@ def lakas_ngopt(instrum, name, input_data_file, budget=100):
 
 
 def main():
+    main_pid = os.getpid()
+    logger2.info('starting main()')
+
+    process_name, proc_list = 'python', []
+    process_objects = find_process_id_by_name(process_name)
+    if len(process_objects) > 0:
+        for elem in process_objects:
+            processID = elem['pid']
+            if processID != main_pid:
+                continue
+            proc = psutil.Process(processID)
+            proc_list.append((proc, processID, process_name))
+    else:
+        logger2.warning('No Running Process found with given text')
+
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawTextHelpFormatter,
         prog='%s %s' % (__script_name__, __version__),
@@ -691,7 +776,8 @@ def main():
                           use_best_param=use_best_param,
                           hashmb=args.hash, common_param=common_param,
                           deterministic_function=deterministic_function,
-                          optimizer_name=optimizer_name, spsa_scale=spsa_scale)
+                          optimizer_name=optimizer_name, spsa_scale=spsa_scale,
+                          proc_list=proc_list)
 
     # Start the optimization.
     for _ in range(optimizer.budget):
