@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.24.0'
+__version__ = 'v0.25.0'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad', 'teytaud']
 
 
@@ -107,6 +107,7 @@ class Objective:
                  opening_file, opening_file_format, best_param, best_loss,
                  games_per_budget=100, depth=1000, concurrency=1,
                  base_time_sec=None, inc_time_sec=None,
+                 move_time_ms=None,
                  match_manager='cutechess', variant='normal',
                  best_result_threshold=0.5, use_best_param=False, hashmb=64,
                  common_param=None, deterministic_function=False,
@@ -123,12 +124,19 @@ class Objective:
         self.depth = int(depth) if depth is not None else depth
         self.base_time_sec = int(base_time_sec) if base_time_sec is not None else base_time_sec
         self.inc_time_sec = float(inc_time_sec) if inc_time_sec is not None else inc_time_sec
+        self.move_time_ms = move_time_ms
+
+        if self.move_time_ms is not None:
+            self.move_time = int(self.move_time_ms)/1000  # cutechess uses st=N, N in sec
+        else:
+            self.move_time = self.move_time_ms
 
         # Raise error if there are no or unsupported move control.
-        if self.base_time_sec is None and self.depth is None:
-            raise Exception('Error, missing time and depth control!')
-        elif self.base_time_sec is None and self.inc_time_sec is not None and self.depth is not None:
-            raise Exception('Error, not supported move control!')
+        if self.move_time is None:
+            if self.base_time_sec is None and self.depth is None:
+                raise Exception('Error, missing time and depth control!')
+            elif self.base_time_sec is None and self.inc_time_sec is not None and self.depth is not None:
+                raise Exception('Error, not supported move control!')
 
         self.opening_file = opening_file
         self.opening_file_format = opening_file_format
@@ -233,7 +241,8 @@ class Objective:
                               match_manager=self.match_manager,
                               variant=self.variant, hashmb=self.hashmb,
                               cutechess_debug=self.cutechess_debug,
-                              cutechess_wait=self.cutechess_wait)
+                              cutechess_wait=self.cutechess_wait,
+                              move_time=self.move_time)
 
         min_res = 1.0 - result
 
@@ -292,7 +301,8 @@ def read_result(line: str, match_manager) -> float:
 def get_match_commands(engine_file, test_options, base_options,
                        opening_file, opening_file_format, games, depth,
                        concurrency, base_time_sec, inc_time_sec, match_manager,
-                       variant, hashmb, cutechess_debug, cutechess_wait):
+                       variant, hashmb, cutechess_debug, cutechess_wait,
+                       move_time):
     if match_manager == 'cutechess':
         tour_manager = Path(Path.cwd(), './tourney_manager/cutechess/cutechess-cli.exe')
     else:
@@ -312,18 +322,21 @@ def get_match_commands(engine_file, test_options, base_options,
         command += f' -pgnout {pgn_output} fi'
 
         # Set the move control.
-        if base_time_sec is not None and inc_time_sec is not None and depth is not None:
-            command += f' -each tc=0/0:{base_time_sec}+{inc_time_sec} depth={depth}'
-        elif base_time_sec is not None and inc_time_sec is not None:
-            command += f' -each tc=0/0:{base_time_sec}+{inc_time_sec}'
-        elif base_time_sec is not None:
-            command += f' -each tc=0/0:{base_time_sec}'
-        elif inc_time_sec is not None and depth is not None:
-            command += f' -each tc=0/0:{0}+{inc_time_sec} depth={depth}'
-        elif inc_time_sec is not None:
-            command += f' -each tc=0/0:{0}+{inc_time_sec}'
-        elif depth is not None:
-            command += f' -each tc=inf depth={depth}'
+        if move_time is not None:
+            command += f' -each st={move_time} timemargin={50}'
+        else:
+            if base_time_sec is not None and inc_time_sec is not None and depth is not None:
+                command += f' -each tc=0/0:{base_time_sec}+{inc_time_sec} depth={depth}'
+            elif base_time_sec is not None and inc_time_sec is not None:
+                command += f' -each tc=0/0:{base_time_sec}+{inc_time_sec}'
+            elif base_time_sec is not None:
+                command += f' -each tc=0/0:{base_time_sec}'
+            elif inc_time_sec is not None and depth is not None:
+                command += f' -each tc=0/0:{0}+{inc_time_sec} depth={depth}'
+            elif inc_time_sec is not None:
+                command += f' -each tc=0/0:{0}+{inc_time_sec}'
+            elif depth is not None:
+                command += f' -each tc=inf depth={depth}'
 
         command += f' -engine cmd={engine_file} name={test_name} {test_options} proto=uci option.Hash={hashmb}'
         command += f' -engine cmd={engine_file} name={base_name} {base_options} proto=uci option.Hash={hashmb}'
@@ -355,14 +368,14 @@ def engine_match(engine_file, test_options, base_options, opening_file,
                  opening_file_format, games=10, depth=None, concurrency=1,
                  base_time_sec=None, inc_time_sec=None, match_manager='cutechess',
                  variant='normal', hashmb=64, cutechess_debug=False,
-                 cutechess_wait=5000) -> float:
+                 cutechess_wait=5000, move_time=None) -> float:
     result = ''
 
     tour_manager, command = get_match_commands(
         engine_file, test_options, base_options, opening_file,
         opening_file_format, games, depth, concurrency, base_time_sec,
         inc_time_sec, match_manager, variant, hashmb, cutechess_debug,
-        cutechess_wait)
+        cutechess_wait, move_time)
 
     # Execute the command line to start the match.
     process = Popen(str(tour_manager) + command, stdout=PIPE, text=True)
@@ -548,6 +561,11 @@ def main():
                              ' allowed.\n'
                              'Example:\n'
                              '--depth 6 ...')
+    parser.add_argument('--move-time-ms', required=False,
+                        help='The maximum search time in milliseconds. Example\n'
+                             '--move-time-ms 1000\n'
+                             'and engine is set to search at 1s. The cutechess\n'
+                             'timemargin is set at 50ms.')
     parser.add_argument('--optimizer', required=False, type=str,
                         help='Type of optimizer to use, can be oneplusone or'
                              ' tbpsa or bayesopt, or spsa, or cmaes, or ngopt, default=oneplusone.',
@@ -810,6 +828,7 @@ def main():
                           depth=args.depth, concurrency=args.concurrency,
                           base_time_sec=args.base_time_sec,
                           inc_time_sec=args.inc_time_sec,
+                          move_time_ms=args.move_time_ms,
                           match_manager=args.match_manager,
                           variant=args.variant,
                           best_result_threshold=best_result_threshold,
