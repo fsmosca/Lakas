@@ -15,11 +15,13 @@ We run an engine vs engine match of 1000 games or so, one engine is called the `
 A guide to setup Lakas on [virtual environment for windows 10](https://github.com/fsmosca/Lakas/wiki/Windows-10-setup).
 
 ### General installation guide
-* Install python 3.8 or later
-* Install nevergrad
+* Install python 3.8 or later.  
+* Install nevergrad.  
   * pip install nevergrad
-* Install hiplot for plotting
+* Install hiplot for plotting.  
   * pip install hiplot
+* Install psutil to log cpu and memory usage of python.  
+  * pip install psutil  
 * Download [Lakas](https://github.com/fsmosca/Lakas/archive/main.zip)
   
 ## B. Command line
