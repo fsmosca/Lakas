@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.25.2'
+__version__ = 'v0.25.3'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad', 'teytaud']
 
 
@@ -792,12 +792,6 @@ def main():
     nevergrad_logger = ng.callbacks.ParametersLogger(optimizer_log_file)
     optimizer.register_callback("tell", nevergrad_logger)
 
-    # Get a recommended param from loaded optimization data
-    # from previous optimization.
-    # Todo: Create own file and remember the best param and loss
-    # from previous optimization, so that we can continue from
-    # those data. Applicable only if --use-best-param flag
-    # is set to ON.
     best_param = {}
     best_loss = None
 
