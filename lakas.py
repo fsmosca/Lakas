@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.25.0'
+__version__ = 'v0.25.1'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad', 'teytaud']
 
 
@@ -63,7 +63,7 @@ logger2 = setup_logger(
 def find_process_id_by_name(process_name):
     process_object = []
 
-    #Iterate over the all the running process
+    # Iterate over all the running process.
     for proc in psutil.process_iter():
        try:
            pinfo = proc.as_dict(attrs=['pid', 'name', 'create_time'])
