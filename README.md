@@ -43,6 +43,9 @@ Given a uci engine with uci option:
 python lakas.py --input-param "{'mThreatByKing': {'init': 24, 'lower': 0, 'upper': 400}, 'mThreatByPawnPush': {'init': 48, 'lower': 0, 'upper': 400}}" ...
 ```
 
+If there is a space in the parameter name like `option name Futility Margin type spin default 100 min 0 max 200`  
+`--input-param "{'\"Futility Margin\"': {'init': 24, 'lower': 0, 'upper': 400}}`
+
 ## C. Supported NeverGrad Optimizers
 * [OnePlusOne](https://facebookresearch.github.io/nevergrad/optimizers_ref.html#nevergrad.optimization.optimizerlib.ParametrizedOnePlusOne)
 * [TBPSA](https://facebookresearch.github.io/nevergrad/optimizers_ref.html#nevergrad.optimization.optimizerlib.ParametrizedTBPSA) (Test-based population-size adaptation)
