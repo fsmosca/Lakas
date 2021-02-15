@@ -127,3 +127,14 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Pycharm
+.idea/
+
+# Lakas
+*.dat
+*.html
+*.txt
+*.exe
+*.pgn
+*.bat
