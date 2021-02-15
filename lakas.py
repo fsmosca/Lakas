@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.25.1'
+__version__ = 'v0.25.2'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad', 'teytaud']
 
 
@@ -51,7 +51,7 @@ def setup_logger(name, log_file, log_formatter, level=logging.INFO, console=Fals
 
 
 logger = setup_logger(
-    'lakas_logger', 'lakas_log.txt', log_formatter,
+    'lakas_logger', 'log_lakas.txt', log_formatter,
     level=logging.INFO, console=True, mode='a')
 
 
