@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.26.0'
+__version__ = 'v0.27.0'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad', 'teytaud']
 
 
@@ -799,6 +799,7 @@ def main():
     best_param = {}
     best_loss = None
 
+    # Dynamic opp: optimizer opponent is the best param found so far.
     if use_best_param:
         if optimizer.num_ask < 1:
             best_loss = best_result_threshold - (1.0 - best_result_threshold) * 0.001
@@ -818,6 +819,19 @@ def main():
             best_param = recommendation_value[1]
             curr_best_loss = optimizer.current_bests
             best_loss = curr_best_loss["average"].mean
+    # Fix opp: optimizer opponent is always the default or init param.
+    else:
+        if optimizer.num_ask < 1:
+            best_loss = 0.5  # init if no previous optimization data yet
+            optimizer.tell(instrum, best_loss)
+            recommendation = optimizer.provide_recommendation()
+            recommendation_value = recommendation.value
+            best_param = recommendation_value[1]
+            curr_best_loss = optimizer.current_bests
+            best_loss = curr_best_loss["average"].mean
+
+            if output_data_file is not None:
+                optimizer.dump(output_data_file)
 
     objective = Objective(optimizer, args.engine, input_param, init_param,
                           args.opening_file, args.opening_file_format,
