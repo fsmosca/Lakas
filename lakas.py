@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.27.0'
+__version__ = 'v0.28.0'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad', 'teytaud']
 
 
@@ -109,7 +109,7 @@ class Objective:
                  base_time_sec=None, inc_time_sec=None,
                  move_time_ms=None,
                  match_manager='cutechess', variant='normal',
-                 best_result_threshold=0.5, use_best_param=False, hashmb=64,
+                 best_result_threshold=0.5, use_best_param=False,
                  common_param=None, deterministic_function=False,
                  optimizer_name=None, spsa_scale=500000, proc_list=[],
                  cutechess_debug=False, cutechess_wait=5000):
@@ -144,7 +144,6 @@ class Objective:
         self.variant = variant
         self.best_result_threshold = best_result_threshold
         self.use_best_param = use_best_param
-        self.hashmb = hashmb
         self.common_param = common_param
         self.deterministic_function = deterministic_function
         self.optimizer_name = optimizer_name
@@ -239,7 +238,7 @@ class Objective:
                               base_time_sec=self.base_time_sec,
                               inc_time_sec=self.inc_time_sec,
                               match_manager=self.match_manager,
-                              variant=self.variant, hashmb=self.hashmb,
+                              variant=self.variant,
                               cutechess_debug=self.cutechess_debug,
                               cutechess_wait=self.cutechess_wait,
                               move_time=self.move_time)
@@ -301,7 +300,7 @@ def read_result(line: str, match_manager) -> float:
 def get_match_commands(engine_file, test_options, base_options,
                        opening_file, opening_file_format, games, depth,
                        concurrency, base_time_sec, inc_time_sec, match_manager,
-                       variant, hashmb, cutechess_debug, cutechess_wait,
+                       variant, cutechess_debug, cutechess_wait,
                        move_time):
     if match_manager == 'cutechess':
         tour_manager = Path(Path.cwd(), './tourney_manager/cutechess/cutechess-cli.exe')
@@ -338,8 +337,8 @@ def get_match_commands(engine_file, test_options, base_options,
             elif depth is not None:
                 command += f' -each tc=inf depth={depth}'
 
-        command += f' -engine cmd={engine_file} name={test_name} {test_options} proto=uci option.Hash={hashmb}'
-        command += f' -engine cmd={engine_file} name={base_name} {base_options} proto=uci option.Hash={hashmb}'
+        command += f' -engine cmd={engine_file} name={test_name} {test_options} proto=uci'
+        command += f' -engine cmd={engine_file} name={base_name} {base_options} proto=uci'
         command += f' -rounds {games//2} -games 2 -repeat 2'
         command += ' -recover'
         command += f' -wait {cutechess_wait}'
@@ -367,14 +366,14 @@ def get_match_commands(engine_file, test_options, base_options,
 def engine_match(engine_file, test_options, base_options, opening_file,
                  opening_file_format, games=10, depth=None, concurrency=1,
                  base_time_sec=None, inc_time_sec=None, match_manager='cutechess',
-                 variant='normal', hashmb=64, cutechess_debug=False,
+                 variant='normal', cutechess_debug=False,
                  cutechess_wait=5000, move_time=None) -> float:
     result = ''
 
     tour_manager, command = get_match_commands(
         engine_file, test_options, base_options, opening_file,
         opening_file_format, games, depth, concurrency, base_time_sec,
-        inc_time_sec, match_manager, variant, hashmb, cutechess_debug,
+        inc_time_sec, match_manager, variant, cutechess_debug,
         cutechess_wait, move_time)
 
     # Execute the command line to start the match.
@@ -549,8 +548,6 @@ def main():
         epilog='%(prog)s')
     parser.add_argument('--engine', required=True,
                         help='Engine filename or engine path and filename.')
-    parser.add_argument('--hash', required=False, type=int,
-                        help='Engine memory in MB, default=64.', default=64)
     parser.add_argument('--base-time-sec', required=False,
                         help='Base time in sec for time control. If depth is not'
                              ' defined this option should have a value.')
@@ -845,7 +842,7 @@ def main():
                           variant=args.variant,
                           best_result_threshold=best_result_threshold,
                           use_best_param=use_best_param,
-                          hashmb=args.hash, common_param=common_param,
+                          common_param=common_param,
                           deterministic_function=deterministic_function,
                           optimizer_name=optimizer_name, spsa_scale=spsa_scale,
                           proc_list=proc_list,
