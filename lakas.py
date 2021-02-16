@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.25.3'
+__version__ = 'v0.26.0'
 __credits__ = ['joergoster', 'musketeerchess', 'nevergrad', 'teytaud']
 
 
@@ -741,8 +741,12 @@ def main():
     # Prepare parameters to be optimized.
     arg = {}
     for k, v in input_param.items():
-        arg.update({k: ng.p.Scalar(init=v['init'], lower=v['lower'],
-                                   upper=v['upper']).set_integer_casting()})
+        if isinstance(v["init"], int):
+            arg.update({k: ng.p.Scalar(init=v['init'], lower=v['lower'],
+                                       upper=v['upper']).set_integer_casting()})
+        elif isinstance(v["init"], float):
+            arg.update({k: ng.p.Scalar(init=v['init'], lower=v['lower'],
+                                       upper=v['upper'])})
     instrum = ng.p.Instrumentation(**arg)
 
     # deterministic_function in Nevergrad default since
