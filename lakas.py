@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.29.2'
+__version__ = 'v0.30.0'
 __credits__ = ['ChrisWhittington', 'joergoster', 'Matthies',
                'musketeerchess', 'teytaud', 'tryingsomestuff']
 
@@ -181,6 +181,7 @@ class Objective:
         for k, v in param.items():
             test_options += f'option.{k}={v} '
             self.test_param.update({k: v})
+        logger2.info(f'test engine options: {test_options}')
 
         logger.info(f'recommended param: {self.test_param}')
 
@@ -196,9 +197,11 @@ class Objective:
         if self.use_best_param:
             for k, v in self.best_param.items():
                 base_options += f'option.{k}={v} '
+            logger2.info(f'base engine options: {base_options}')
         else:
             for k, v in self.init_param.items():
                 base_options += f'option.{k}={v} '
+            logger2.info(f'base engine options: {base_options}')
 
         # Add common param.
         if self.common_param is not None:
@@ -250,7 +253,7 @@ class Objective:
         log_cpu(self.proc_list, msg='after the match')
 
         logger.info(f'actual result: {result:0.5f} @{self.games_per_budget} games,'
-                    f' minimized result: {min_res:0.5f},'
+                    f' minimized result or loss: {min_res:0.5f},'
                     ' point of view: recommended\n')
 
         # Modify the loss that is reported to the optimizer as
@@ -272,7 +275,10 @@ def set_param(input_param):
     """Converts input param to a dict of param_name: init value"""
     new_param = {}
     for k, v in input_param.items():
-        new_param.update({k: v['init']})
+        if type(v) == list:
+            new_param.update({k: v[0]})  # First value is default.
+        else:
+            new_param.update({k: v['init']})
 
     return new_param
 
@@ -737,6 +743,8 @@ def main():
     input_param = ast.literal_eval(args.input_param)
     input_param = OrderedDict(sorted(input_param.items()))
 
+    logger.info(f'Lakas {__version__}')
+
     logger.info(f'input param: {input_param}\n')
     init_param = set_param(input_param)
 
@@ -749,12 +757,16 @@ def main():
     # Prepare parameters to be optimized.
     arg = {}
     for k, v in input_param.items():
-        if isinstance(v["init"], int):
-            arg.update({k: ng.p.Scalar(init=v['init'], lower=v['lower'],
-                                       upper=v['upper']).set_integer_casting()})
-        elif isinstance(v["init"], float):
-            arg.update({k: ng.p.Scalar(init=v['init'], lower=v['lower'],
-                                       upper=v['upper'])})
+        if type(v) == list:
+            arg.update({k: ng.p.Choice(v)})
+        else:
+            if isinstance(v["init"], int):
+                arg.update({k: ng.p.Scalar(init=v['init'], lower=v['lower'],
+                                           upper=v['upper']).set_integer_casting()})
+            elif isinstance(v["init"], float):
+                arg.update({k: ng.p.Scalar(init=v['init'], lower=v['lower'],
+                                           upper=v['upper'])})
+
     instrum = ng.p.Instrumentation(**arg)
 
     # deterministic_function in Nevergrad default since
