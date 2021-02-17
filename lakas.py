@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.30.0'
+__version__ = 'v0.31.0'
 __credits__ = ['ChrisWhittington', 'joergoster', 'Matthies',
                'musketeerchess', 'teytaud', 'tryingsomestuff']
 
@@ -210,7 +210,8 @@ class Objective:
 
         base_options = base_options.rstrip()
 
-        logger.info(f'best param: {opt_best_param[1]}')
+        if self.optimizer_name != 'spsa' or self.optimizer.num_ask > 1:
+            logger.info(f'best param: {opt_best_param[1]}')
 
         # optimistic for non-deterministic and average for deterministic.
         if not self.deterministic_function:
@@ -222,7 +223,8 @@ class Objective:
         if self.optimizer_name == 'spsa':
             curr_best_loss = curr_best_loss/self.spsa_scale
 
-        logger.info(f'best loss: {curr_best_loss}')
+        if self.optimizer_name != 'spsa' or self.optimizer.num_ask > 1:
+            logger.info(f'best loss: {curr_best_loss}')
 
         logger.info(f'init param: {self.init_param}')
 
@@ -822,27 +824,29 @@ def main():
     # Get best loss.
 
     # If there is no existing optimization data we will tell
-    # the optimizer the best param is the init param and
+    # the optimizer (except spsa) the best param is the init param and
     # its loss is 0.5 or best result threshold.
     if optimizer.num_ask < 1:
+        if optimizer_name != 'spsa':
 
-        # Dynamic opp: optimizer opponent is the best param found so far.
-        if use_best_param:
-            best_loss = best_result_threshold - (1.0 - best_result_threshold) * 0.001
+            # Dynamic opp: optimizer opponent is the best param found so far.
+            if use_best_param:
+                best_loss = best_result_threshold - (1.0 - best_result_threshold) * 0.001
 
-        # Fix opp: optimizer opponent is always the default or init param.
-        else:
-            best_loss = 0.5
+            # Fix opp: optimizer opponent is always the default or init param.
+            else:
+                best_loss = 0.5
 
-        optimizer.tell(instrum, best_loss)
-        recommendation = optimizer.provide_recommendation()
-        recommendation_value = recommendation.value
-        best_param = recommendation_value[1]
-        curr_best_loss = optimizer.current_bests
-        best_loss = curr_best_loss["average"].mean
+            optimizer.tell(instrum, best_loss)
 
-        if output_data_file is not None:
-            optimizer.dump(output_data_file)
+            recommendation = optimizer.provide_recommendation()
+            recommendation_value = recommendation.value
+            best_param = recommendation_value[1]
+            curr_best_loss = optimizer.current_bests
+            best_loss = curr_best_loss["average"].mean
+
+            if output_data_file is not None:
+                optimizer.dump(output_data_file)
 
     # If there is already existing optimization data.
     elif input_data_file is not None:
