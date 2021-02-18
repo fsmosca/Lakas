@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.31.0'
+__version__ = 'v0.32.0'
 __credits__ = ['ChrisWhittington', 'joergoster', 'Matthies',
                'musketeerchess', 'teytaud', 'tryingsomestuff']
 
@@ -831,7 +831,7 @@ def main():
 
             # Dynamic opp: optimizer opponent is the best param found so far.
             if use_best_param:
-                best_loss = best_result_threshold - (1.0 - best_result_threshold) * 0.001
+                best_loss = 1.0 - best_result_threshold
 
             # Fix opp: optimizer opponent is always the default or init param.
             else:
