@@ -8,9 +8,10 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.32.0'
+__version__ = 'v0.32.1'
 __credits__ = ['ChrisWhittington', 'joergoster', 'Matthies',
-               'musketeerchess', 'teytaud', 'tryingsomestuff']
+               'musketeerchess', 'teytaud', 'thehlopster',
+               'tryingsomestuff']
 
 
 import os
