@@ -527,7 +527,6 @@ def match(e1, e2, fen, output_game_file, variant, draw_option,
 
             # Draw
             if (draw_option['movenumber'] is not None
-                    and draw_option['movenumber'] is not None
                     and draw_option['score'] is not None):
                 game_endr, gresr, e1scorer = adjudicate_draw(
                     score_history, draw_option)
