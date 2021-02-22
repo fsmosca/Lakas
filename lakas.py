@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.32.1'
+__version__ = 'v0.33.0'
 __credits__ = ['ChrisWhittington', 'joergoster', 'Matthies',
                'musketeerchess', 'teytaud', 'thehlopster',
                'tryingsomestuff']
@@ -114,7 +114,8 @@ class Objective:
                  best_result_threshold=0.5, use_best_param=False,
                  common_param=None, deterministic_function=False,
                  optimizer_name=None, spsa_scale=500000, proc_list=[],
-                 cutechess_debug=False, cutechess_wait=5000):
+                 cutechess_debug=False, cutechess_wait=5000,
+                 protocol='uci'):
         self.optimizer = optimizer
         self.engine_file = engine_file
         self.input_param = input_param
@@ -165,6 +166,7 @@ class Objective:
         self.proc_list = proc_list
         self.cutechess_debug=cutechess_debug
         self.cutechess_wait=cutechess_wait
+        self.protocol=protocol
 
     def run(self, **param):
 
@@ -249,7 +251,8 @@ class Objective:
                               variant=self.variant,
                               cutechess_debug=self.cutechess_debug,
                               cutechess_wait=self.cutechess_wait,
-                              move_time=self.move_time, nodes=self.nodes)
+                              move_time=self.move_time, nodes=self.nodes,
+                              protocol=self.protocol)
 
         min_res = 1.0 - result
 
@@ -312,7 +315,7 @@ def get_match_commands(engine_file, test_options, base_options,
                        opening_file, opening_file_format, games, depth,
                        concurrency, base_time_sec, inc_time_sec, match_manager,
                        variant, cutechess_debug, cutechess_wait,
-                       move_time, nodes):
+                       move_time, nodes, protocol):
     if match_manager == 'cutechess':
         tour_manager = Path(Path.cwd(), './tourney_manager/cutechess/cutechess-cli.exe')
     else:
@@ -350,8 +353,8 @@ def get_match_commands(engine_file, test_options, base_options,
             elif depth is not None:
                 command += f' -each tc=inf depth={depth}'
 
-        command += f' -engine cmd={engine_file} name={test_name} {test_options} proto=uci'
-        command += f' -engine cmd={engine_file} name={base_name} {base_options} proto=uci'
+        command += f' -engine cmd={engine_file} name={test_name} {test_options} proto={protocol}'
+        command += f' -engine cmd={engine_file} name={base_name} {base_options} proto={protocol}'
         command += f' -rounds {games//2} -games 2 -repeat 2'
         command += ' -recover'
         command += f' -wait {cutechess_wait}'
@@ -380,14 +383,15 @@ def engine_match(engine_file, test_options, base_options, opening_file,
                  opening_file_format, games=10, depth=None, concurrency=1,
                  base_time_sec=None, inc_time_sec=None, match_manager='cutechess',
                  variant='normal', cutechess_debug=False,
-                 cutechess_wait=5000, move_time=None, nodes=None) -> float:
+                 cutechess_wait=5000, move_time=None, nodes=None,
+                 protocol='uci') -> float:
     result = ''
 
     tour_manager, command = get_match_commands(
         engine_file, test_options, base_options, opening_file,
         opening_file_format, games, depth, concurrency, base_time_sec,
         inc_time_sec, match_manager, variant, cutechess_debug,
-        cutechess_wait, move_time, nodes)
+        cutechess_wait, move_time, nodes, protocol)
 
     # Execute the command line to start the match.
     process = Popen(str(tour_manager) + command, stdout=PIPE, text=True)
@@ -561,6 +565,9 @@ def main():
         epilog='%(prog)s')
     parser.add_argument('--engine', required=True,
                         help='Engine filename or engine path and filename.')
+    parser.add_argument('--protocol', required=False,
+                        help='Engine filename or engine path and filename, default=uci',
+                        default='uci')
     parser.add_argument('--base-time-sec', required=False,
                         help='Base time in sec for time control. If depth is not'
                              ' defined this option should have a value.')
@@ -875,7 +882,8 @@ def main():
                           optimizer_name=optimizer_name, spsa_scale=spsa_scale,
                           proc_list=proc_list,
                           cutechess_debug=args.cutechess_debug,
-                          cutechess_wait=args.cutechess_wait)
+                          cutechess_wait=args.cutechess_wait,
+                          protocol=args.protocol)
 
     # Start the optimization.
     for _ in range(optimizer.budget):
