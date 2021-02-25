@@ -44,7 +44,24 @@ python lakas.py --input-param "{'mThreatByKing': {'init': 24, 'lower': 0, 'upper
 ```
 
 If there is a space in the parameter name like `option name Futility Margin type spin default 100 min 0 max 200`  
-`--input-param "{'\"Futility Margin\"': {'init': 24, 'lower': 0, 'upper': 400}}`
+`--input-param "{'\"Futility Margin\"': {'init': 24, 'lower': 0, 'upper': 400}}"`
+
+#### Parameter Categorical and float values
+Given `option name mThreatByKing type spin default 24 min 0 max 400`  
+`--input-param "{'mThreatByKing': [24, 16, 20, 28, 32]}"`  
+Note the first value should be the default, in this case its 24.  
+
+Or with true or false.  
+`--input-param "{'MultiGather': ['false', 'true']}"`  
+
+or with float value  
+`--input-param "{'CPuct': [1.745, 1.675, 1.875]}"` 
+
+can also be  
+`--input-param "{'CPuct': {'init': 1.745, 'lower': 1.0, 'upper': 3.0}}"`  
+
+or a combination  
+`--input-param "{'MultiGather': ['false', 'true'], 'CPuct': {'init': 1.745, 'lower': 1.0, 'upper': 3.0}}"`
 
 ## C. Supported NeverGrad Optimizers
 * [OnePlusOne](https://facebookresearch.github.io/nevergrad/optimizers_ref.html#nevergrad.optimization.optimizerlib.ParametrizedOnePlusOne)
