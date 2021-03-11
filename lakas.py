@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.33.0'
+__version__ = 'v0.33.2'
 __credits__ = ['ChrisWhittington', 'joergoster', 'Matthies',
                'musketeerchess', 'teytaud', 'thehlopster',
                'tryingsomestuff']
@@ -215,6 +215,12 @@ class Objective:
 
         if self.optimizer_name != 'spsa' or self.optimizer.num_ask > 1:
             logger.info(f'best param: {opt_best_param[1]}')
+
+        # Output for match manager.
+        option_output = ''
+        for k, v in opt_best_param[1].items():
+            option_output += f'option.{k}={v} '
+        logger.info(f'{option_output}')
 
         # optimistic for non-deterministic and average for deterministic.
         if not self.deterministic_function:
