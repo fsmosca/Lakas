@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.34.0'
+__version__ = 'v0.35.0'
 __credits__ = ['ChrisWhittington', 'joergoster', 'Matthies',
                'musketeerchess', 'teytaud', 'thehlopster',
                'tryingsomestuff']
@@ -329,7 +329,8 @@ def get_match_commands(engine_file, test_options, base_options,
     if match_manager == 'cutechess':
         tour_manager = Path(match_manager_path)
     else:
-        tour_manager = 'python -u ./tourney_manager/duel/duel.py'
+        # match_manager_path = 'python c:/chess/tourney_manager/duel/duel.py'
+        tour_manager = match_manager_path
 
     test_name = 'test'
     base_name = 'base'
@@ -683,7 +684,13 @@ def main():
                         help='Match manager name, can be cutechess or duel, default=cutechess.',
                         default='cutechess')
     parser.add_argument('--match-manager-path', required=True,
-                        help='Match manager path and/or filename')
+                        help='Match manager path and/or filename. Example:\n'
+                             'cutechess:\n'
+                             '--match-manager-path c:/chess/tourney_manager/cutechess/cutechess-cli.exe\n'
+                             'duel.py for xboard engines:\n'
+                             '--match-manager-path python c:/chess/tourney_manager/duel/duel.py\n'
+                             'or\n'
+                              '--match-manager-path c:/python3/python c:/chess/tourney_manager/duel/duel.py')
     parser.add_argument('--opening-file', required=True, type=str,
                         help='Start opening filename in pgn or epd format.')
     parser.add_argument('--opening-file-format', required=True, type=str,
