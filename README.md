@@ -76,6 +76,12 @@ or a combination
 * [CMAES](https://facebookresearch.github.io/nevergrad/optimizers_ref.html#nevergrad.optimization.optimizerlib.ParametrizedCMA) (Covariance Matrix Adaptation Evolution Strategy)
 * [NGOpt](https://facebookresearch.github.io/nevergrad/optimizers_ref.html#nevergrad.optimization.optimizerlib.NGOpt) and [article](https://arxiv.org/pdf/2004.14014.pdf)
 
+`--optimizer oneplusone ...`  
+`--optimizer tbpsa ...`  
+`--optimizer bayesopt ...`  
+`--optimizer spsa ...`  
+`--optimizer cmaes ...`  
+`--optimizer ngopt ...`
 
 ## D. Sample optimization sessions
 * [Search and Evaluation optimization](https://github.com/fsmosca/Lakas/wiki/Search-and-Evaluation-parameter-Optimization)
