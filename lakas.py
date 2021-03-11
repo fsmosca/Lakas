@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.33.2'
+__version__ = 'v0.34.0'
 __credits__ = ['ChrisWhittington', 'joergoster', 'Matthies',
                'musketeerchess', 'teytaud', 'thehlopster',
                'tryingsomestuff']
@@ -110,7 +110,8 @@ class Objective:
                  games_per_budget=100, depth=1000, concurrency=1,
                  base_time_sec=None, inc_time_sec=None,
                  move_time_ms=None, nodes=None,
-                 match_manager='cutechess', variant='normal',
+                 match_manager='cutechess',
+                 match_manager_path=None, variant='normal',
                  best_result_threshold=0.5, use_best_param=False,
                  common_param=None, deterministic_function=False,
                  optimizer_name=None, spsa_scale=500000, proc_list=[],
@@ -145,6 +146,7 @@ class Objective:
         self.opening_file = opening_file
         self.opening_file_format = opening_file_format
         self.match_manager = match_manager
+        self.match_manager_path = match_manager_path
         self.variant = variant
         self.best_result_threshold = best_result_threshold
         self.use_best_param = use_best_param
@@ -254,6 +256,7 @@ class Objective:
                               base_time_sec=self.base_time_sec,
                               inc_time_sec=self.inc_time_sec,
                               match_manager=self.match_manager,
+                              match_manager_path=self.match_manager_path,
                               variant=self.variant,
                               cutechess_debug=self.cutechess_debug,
                               cutechess_wait=self.cutechess_wait,
@@ -320,10 +323,11 @@ def read_result(line: str, match_manager) -> float:
 def get_match_commands(engine_file, test_options, base_options,
                        opening_file, opening_file_format, games, depth,
                        concurrency, base_time_sec, inc_time_sec, match_manager,
+                       match_manager_path,
                        variant, cutechess_debug, cutechess_wait,
                        move_time, nodes, protocol):
     if match_manager == 'cutechess':
-        tour_manager = Path(Path.cwd(), './tourney_manager/cutechess/cutechess-cli.exe')
+        tour_manager = Path(match_manager_path)
     else:
         tour_manager = 'python -u ./tourney_manager/duel/duel.py'
 
@@ -387,7 +391,8 @@ def get_match_commands(engine_file, test_options, base_options,
 
 def engine_match(engine_file, test_options, base_options, opening_file,
                  opening_file_format, games=10, depth=None, concurrency=1,
-                 base_time_sec=None, inc_time_sec=None, match_manager='cutechess',
+                 base_time_sec=None, inc_time_sec=None,
+                 match_manager='cutechess', match_manager_path=None,
                  variant='normal', cutechess_debug=False,
                  cutechess_wait=5000, move_time=None, nodes=None,
                  protocol='uci') -> float:
@@ -396,7 +401,7 @@ def engine_match(engine_file, test_options, base_options, opening_file,
     tour_manager, command = get_match_commands(
         engine_file, test_options, base_options, opening_file,
         opening_file_format, games, depth, concurrency, base_time_sec,
-        inc_time_sec, match_manager, variant, cutechess_debug,
+        inc_time_sec, match_manager, match_manager_path, variant, cutechess_debug,
         cutechess_wait, move_time, nodes, protocol)
 
     # Execute the command line to start the match.
@@ -677,6 +682,8 @@ def main():
     parser.add_argument('--match-manager', required=False, type=str,
                         help='Match manager name, can be cutechess or duel, default=cutechess.',
                         default='cutechess')
+    parser.add_argument('--match-manager-path', required=True,
+                        help='Match manager path and/or filename')
     parser.add_argument('--opening-file', required=True, type=str,
                         help='Start opening filename in pgn or epd format.')
     parser.add_argument('--opening-file-format', required=True, type=str,
@@ -880,6 +887,7 @@ def main():
                           move_time_ms=args.move_time_ms,
                           nodes=args.nodes,
                           match_manager=args.match_manager,
+                          match_manager_path=args.match_manager_path,
                           variant=args.variant,
                           best_result_threshold=best_result_threshold,
                           use_best_param=use_best_param,
