@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.35.0'
+__version__ = 'v0.36.0'
 __credits__ = ['ChrisWhittington', 'joergoster', 'Matthies',
                'musketeerchess', 'teytaud', 'thehlopster',
                'tryingsomestuff']
@@ -24,9 +24,13 @@ from subprocess import Popen, PIPE
 from pathlib import Path
 import logging
 import platform
+import shlex
 
 import nevergrad as ng
 import psutil
+
+
+os_name = platform.system()  # Linux, Windows or ''
 
 
 log_formatter = logging.Formatter("%(asctime)s | %(levelname)-5.5s | %(message)s")
@@ -87,7 +91,6 @@ def log_cpu(proc_list, msg=''):
     if len(proc_list) < 1:
         return
 
-    os_name = platform.system()  # Linux, Windows or ''
     num_threads = psutil.cpu_count(logical=True)
 
     for (p, pid, name) in proc_list:
@@ -406,7 +409,10 @@ def engine_match(engine_file, test_options, base_options, opening_file,
         cutechess_wait, move_time, nodes, protocol)
 
     # Execute the command line to start the match.
-    process = Popen(str(tour_manager) + command, stdout=PIPE, text=True)
+    if os_name.lower() == 'windows':
+        process = Popen(str(tour_manager) + command, stdout=PIPE, text=True)
+    else:
+        process = Popen(shlex.split(str(tour_manager) + command), stdout=PIPE, text=True)
     for eline in iter(process.stdout.readline, ''):
         line = eline.strip()
         logger2.info(line)
