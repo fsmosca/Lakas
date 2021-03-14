@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.36.1'
+__version__ = 'v0.36.2'
 __credits__ = ['ChrisWhittington', 'Claes1981', 'joergoster', 'Matthies',
                'musketeerchess', 'teytaud', 'thehlopster',
                'tryingsomestuff']
@@ -780,6 +780,7 @@ def main():
     input_param = OrderedDict(sorted(input_param.items()))
 
     logger.info(f'Lakas {__version__}')
+    logger.info(f'nevegrad {ng.__version__}')
 
     logger.info(f'input param: {input_param}\n')
     init_param = set_param(input_param)
