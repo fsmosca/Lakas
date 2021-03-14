@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.36.2'
+__version__ = 'v0.36.3'
 __credits__ = ['ChrisWhittington', 'Claes1981', 'joergoster', 'Matthies',
                'musketeerchess', 'teytaud', 'thehlopster',
                'tryingsomestuff']
@@ -813,7 +813,10 @@ def main():
 
     logger.info(f'parameter dimension: {instrum.dimension}')
     logger.info(f'deterministic function: {deterministic_function}')
-    logger.info(f'use best param: {use_best_param}')
+    if use_best_param:
+        logger.info(f'use best param: {use_best_param}, optimizer suggested param is against the best param found so far')
+    else:
+        logger.info(f'use best param: {use_best_param}, optimizer suggested param is always against the init param')
     if use_best_param:
         logger.info(f'best result threshold: {best_result_threshold}')
 
