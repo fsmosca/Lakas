@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.37.0'
+__version__ = 'v0.37.1'
 __credits__ = ['ChrisWhittington', 'Claes1981', 'joergoster', 'Matthies',
                'musketeerchess', 'teytaud', 'thehlopster',
                'tryingsomestuff']
@@ -589,8 +589,7 @@ def main():
                         help='Engine filename or engine path and filename, default=uci',
                         default='uci')
     parser.add_argument('--base-time-sec', required=False,
-                        help='Base time in sec for time control. If depth is not'
-                             ' defined this option should have a value.')
+                        help='Base time in sec for time control.')
     parser.add_argument('--inc-time-sec', required=False,
                         help='Increment time in sec for time control.')
     parser.add_argument('--depth', required=False,
@@ -599,13 +598,13 @@ def main():
                              'Example:\n'
                              '--depth 6 ...')
     parser.add_argument('--move-time-ms', required=False,
-                        help='The maximum search time in milliseconds. Example\n'
+                        help='The maximum search time in milliseconds. This is only for cutechess. Example\n'
                              '--move-time-ms 1000\n'
                              'and engine is set to search at 1s. The cutechess\n'
                              'timemargin is set at 50ms.')
     parser.add_argument('--nodes', required=False,
                         help='The maximum nodes that the engine is'
-                             ' allowed to search. Do not use other\n'
+                             ' allowed to search. This is only for cutechess. Do not use other\n'
                              'move control like --base-time-sec or'
                              ' --depth or --move-time-sec example:\n'
                              '--nodes 500 ...')
