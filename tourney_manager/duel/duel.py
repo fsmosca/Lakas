@@ -465,8 +465,6 @@ def get_tc(tcd):
     """
     base_minv, base_secv, inc_secv = 0, 0, 0.0
 
-    print(f'tcd: {tcd}')
-
     if tcd == '':
         return base_minv, base_secv, inc_secv
 
