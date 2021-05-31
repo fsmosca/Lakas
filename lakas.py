@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.36.3'
+__version__ = 'v0.37.0'
 __credits__ = ['ChrisWhittington', 'Claes1981', 'joergoster', 'Matthies',
                'musketeerchess', 'teytaud', 'thehlopster',
                'tryingsomestuff']
@@ -389,6 +389,8 @@ def get_match_commands(engine_file, test_options, base_options,
         command += f' -engine cmd={engine_file} name={base_name} {base_options}'
         command += f' -rounds {games} -repeat 2'
         command += f' -openings file={opening_file}'
+        command += f' -draw movenumber=40 movecount=10 score=0'
+        command += f' -resign movecount=6 score=900'
 
     return tour_manager, command
 
