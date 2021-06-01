@@ -10,7 +10,7 @@ A module to handle xboard or winboard engine matches.
 
 __author__ = 'fsmosca'
 __script_name__ = 'Duel'
-__version__ = 'v1.11.0'
+__version__ = 'v1.12.0'
 __credits__ = ['musketeerchess']
 
 
@@ -223,7 +223,10 @@ class Duel:
                 logging.info(f'base_minv: {base_minv}m, base_secv: {base_secv}s, incv: {incv}s')
 
                 # Send level command to each engine.
-                tbase = max(1, all_base_sec // 60)
+                if pr['depth'] > 0:
+                    tbase = 300
+                else:
+                    tbase = max(1, all_base_sec // 60)
                 send_command(e, f'level 0 {tbase} {float(incv):0.2f}', pn)
 
                 # Setup Timer, convert base time to ms and inc in sec to ms
@@ -710,11 +713,13 @@ def main():
                         help='This option is used to apply to both engines.\n'
                              'Example where tc is applied to each engine:\n'
                              '-each tc=1+0.1\n'
-                             '1 is in minutes and 0.1 is the increment in seconds.\n'
+                             '1 is in sec and 0.1 is the increment in sec.\n'
                              '-each tc=0:30+0.2\n'
-                             '0 is in minutes, 30 is in seconds, 0.2 is increment.\n'
+                             '0 is in min, 30 is in sec, 0.2 is the increment in sec.\n'
                              '-each option.PawnValue=100\n'
-                             'PawnValue is the name of the option.')
+                             'PawnValue is the name of the option. Or\n'
+                             '-each tc=inf depth=4\n'
+                             'to set the depth to 4.')
     parser.add_argument('-openings', nargs='*', action='append',
                         required=False,
                         metavar=('file=', 'random='),
