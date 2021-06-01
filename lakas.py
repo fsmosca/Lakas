@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.37.1'
+__version__ = 'v0.38.0'
 __credits__ = ['ChrisWhittington', 'Claes1981', 'joergoster', 'Matthies',
                'musketeerchess', 'teytaud', 'thehlopster',
                'tryingsomestuff']
@@ -382,7 +382,7 @@ def get_match_commands(engine_file, test_options, base_options,
     else:
         command += f' -pgnout {pgn_output}'
         if depth is not None:
-            command += f' -each tc=0/0:{base_time_sec}+{inc_time_sec} depth={depth}'
+            command += f' -each tc=inf depth={depth}'
         else:
             command += f' -each tc=0/0:{base_time_sec}+{inc_time_sec}'
         command += f' -engine cmd={engine_file} name={test_name} {test_options}'
