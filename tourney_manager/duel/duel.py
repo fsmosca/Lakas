@@ -10,7 +10,7 @@ A module to handle xboard or winboard engine matches.
 
 __author__ = 'fsmosca'
 __script_name__ = 'Duel'
-__version__ = 'v1.10.0'
+__version__ = 'v1.11.0'
 __credits__ = ['musketeerchess']
 
 
@@ -42,6 +42,8 @@ class Timer:
         self.base_time = base_time
         self.inc_time = inc_time
         self.rem_time = self.base_time + self.inc_time
+        self.init_base_time = base_time
+        self.init_inc_time = inc_time
 
     def update(self, elapse):
         """
@@ -306,7 +308,8 @@ class Duel:
                         score_history.append(score if score is not None else 0)
                         depth_history.append(depth if depth is not None else 0)
 
-                        if timer[side].is_zero_time():
+                        if (timer[side].init_base_time + timer[side].init_inc_time > 0
+                                and timer[side].is_zero_time()):
                             is_time_over[current_color] = True
                             termination = 'forfeits on time'
                             logging.info('time is over')
@@ -465,12 +468,13 @@ def get_fen_list(fn, is_rand=True):
 
 def get_tc(tcd):
     """
-    tc=0/3+1 or 3+1, blitz 3m + 1s inc
+    tc=0/3+1 or 3+1, blitz 3s + 1s inc
+    tc=0/3:1+1 or 3:1+1, blitz 3m + 1s with 1s inc
     tc=0/0:5+0.1 or 0:5+0.1, blitz 0m + 5s + 0.1s inc
     """
     base_minv, base_secv, inc_secv = 0, 0, 0.0
 
-    if tcd == '':
+    if tcd == '' or tcd == 'inf':
         return base_minv, base_secv, inc_secv
 
     # Check base time with minv:secv format.
@@ -483,7 +487,7 @@ def get_tc(tcd):
         base_minv = int(basev.split(':')[0])
         base_secv = int(basev.split(':')[1])
     else:
-        base_minv = int(basev)
+        base_secv = int(basev)
 
     if '/' in tcd:
         inc_secv = float(tcd.split('/')[1].split('+')[1].strip())
