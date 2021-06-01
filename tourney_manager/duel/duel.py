@@ -10,7 +10,7 @@ A module to handle xboard or winboard engine matches.
 
 __author__ = 'fsmosca'
 __script_name__ = 'Duel'
-__version__ = 'v1.12.0'
+__version__ = 'v1.13.0'
 __credits__ = ['musketeerchess']
 
 
@@ -477,6 +477,8 @@ def get_tc(tcd):
     """
     base_minv, base_secv, inc_secv = 0, 0, 0.0
 
+    logging.info(f'tc value: {tcd}')
+
     if tcd == '' or tcd == 'inf':
         return base_minv, base_secv, inc_secv
 
@@ -493,9 +495,15 @@ def get_tc(tcd):
         base_secv = int(basev)
 
     if '/' in tcd:
-        inc_secv = float(tcd.split('/')[1].split('+')[1].strip())
+        # 0/0:5+None
+        inc_value = tcd.split('/')[1].split('+')[1].strip()
+        if inc_value != 'None':
+            inc_secv = float(inc_value)
     else:
-        inc_secv = float(tcd.split('+')[1].strip())
+        # 0:5+None
+        inc_value = tcd.split('+')[1].strip()
+        if inc_value != 'None':
+            inc_secv = float(inc_value)
 
     return base_minv, base_secv, inc_secv
 
