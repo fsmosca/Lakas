@@ -10,7 +10,7 @@ A module to handle xboard or winboard engine matches.
 
 __author__ = 'fsmosca'
 __script_name__ = 'Duel'
-__version__ = 'v1.9.2'
+__version__ = 'v1.10.0'
 __credits__ = ['musketeerchess']
 
 
@@ -281,9 +281,14 @@ class Duel:
                             print(line)
 
                     # Save score and depth from engine search info.
-                    if line.split()[0].isdigit():
-                        score = int(line.split()[1])  # cp
-                        depth = int(line.split()[0])
+                    try:
+                        value_at_index_0 = line.split()[0]
+                    except IndexError:
+                        pass
+                    else:
+                        if value_at_index_0.isdigit():
+                            score = int(line.split()[1])  # cp
+                            depth = int(line.split()[0])
 
                     # Check end of game as claimed by engines.
                     game_endr, gresr, e1scorer, termi = is_game_end(line, test_engine_color)
