@@ -119,7 +119,14 @@ class Objective:
                  common_param=None, deterministic_function=False,
                  optimizer_name=None, spsa_scale=500000, proc_list=[],
                  cutechess_debug=False, cutechess_wait=5000,
-                 protocol='uci', enhance=False, enhance_fenfile='default'):
+                 protocol='uci', enhance=False,
+                 enhance_hashmb=64,
+                 enhance_threads=1,
+                 enhance_limitvalue=15,
+                 enhance_fenfile='default',
+                 enhance_limittype='depth',
+                 enhance_evaltype='mixed',
+                 enhance_posperfile=50):
         self.optimizer = optimizer
         self.engine_file = engine_file
         self.input_param = input_param
@@ -174,7 +181,13 @@ class Objective:
         self.cutechess_wait=cutechess_wait
         self.protocol=protocol
         self.enhance = enhance
+        self.enhance_hashmb = enhance_hashmb
+        self.enhance_threads = enhance_threads
+        self.enhance_limitvalue = enhance_limitvalue
         self.enhance_fenfile = enhance_fenfile
+        self.enhance_limittype = enhance_limittype
+        self.enhance_evaltype = enhance_evaltype
+        self.enhance_posperfile = enhance_posperfile
 
     def bench(self, test_options):
         """
@@ -183,7 +196,14 @@ class Objective:
         """
         total_nodes = None
         command = f' -engine cmd={self.engine_file} {test_options}'
+        command += f' -hashmb {self.enhance_hashmb}'
+        command += f' -threads {self.enhance_threads}'
+        command += f' -limitvalue {self.enhance_limitvalue}'
         command += f' -fenfile {self.enhance_fenfile}'
+        command += f' -limittype {self.enhance_limittype}'
+        command += f' -evaltype {self.enhance_evaltype}'
+        command += f' -posperfile {self.enhance_posperfile}'
+        command += f' -concurrency {self.concurrency}'
 
         if os_name.lower() == 'windows':
             process = Popen(str(self.match_manager_path) + command, stdout=PIPE, text=True)
@@ -737,9 +757,29 @@ def main():
                               '--match-manager-path c:/python3/python c:/chess/tourney_manager/duel/duel.py\n'
                              'enhance.py for bench\n'
                              '--match-manager-path python c:/lakas/interface/enhance.py')
+    parser.add_argument('--enhance', action='store_true',
+                        help='a flag to run engine with bench command and return the nodes as objective value.')
+    parser.add_argument('--enhance-hashmb', required=False, type=int,
+                        help='hash size in mb, default=64',
+                        default=64)
+    parser.add_argument('--enhance-threads', required=False, type=int,
+                        help='engine threads, default=1',
+                        default=1)
+    parser.add_argument('--enhance-limitvalue', required=False, type=int,
+                        help='search limit value, default=15',
+                        default=15)
     parser.add_argument('--enhance-fenfile', required=False, type=str,
                         help='position file in fen or epd format used for the bench command, default=default',
                         default='default')
+    parser.add_argument('--enhance-limittype', required=False, type=str,
+                        help='search limit type [depth, perft, nodes, movetime], default=depth',
+                        default='depth')
+    parser.add_argument('--enhance-evaltype', required=False, type=str,
+                        help='eval type [mixed, classical, nnue], default=mixed',
+                        default='mixed')
+    parser.add_argument('--enhance-posperfile', required=False, type=int,
+                        help='number of positions in the bench file, default=50',
+                        default=50)
     parser.add_argument('--opening-file', required=True, type=str,
                         help='Start opening filename in pgn or epd format.')
     parser.add_argument('--opening-file-format', required=True, type=str,
@@ -778,8 +818,6 @@ def main():
                         help='Use best param for the base engine. A param'
                              ' becomes best if it defeats the\n'
                              'current best by --best-result-threshold value.')
-    parser.add_argument('--enhance', action='store_true',
-                        help='Run engine with bench command and return nodes as objective value.')
     parser.add_argument('--best-result-threshold', required=False, type=float,
                         help='When match result is greater than this, update'
                              ' the best param, default=0.5.\n'
@@ -961,7 +999,13 @@ def main():
                           cutechess_wait=args.cutechess_wait,
                           protocol=args.protocol,
                           enhance=args.enhance,
-                          enhance_fenfile=args.enhance_fenfile)
+                          enhance_hashmb=args.enhance_hashmb,
+                          enhance_threads=args.enhance_threads,
+                          enhance_limitvalue=args.enhance_limitvalue,
+                          enhance_fenfile=args.enhance_fenfile,
+                          enhance_limittype=args.enhance_limittype,
+                          enhance_evaltype=args.enhance_evaltype,
+                          enhance_posperfile=args.enhance_posperfile)
 
     # Start the optimization.
     for _ in range(optimizer.budget):
