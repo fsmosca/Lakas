@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.38.0'
+__version__ = 'v0.39.0'
 __credits__ = ['ChrisWhittington', 'Claes1981', 'joergoster', 'Matthies',
                'musketeerchess', 'teytaud', 'thehlopster',
                'tryingsomestuff']
@@ -119,7 +119,7 @@ class Objective:
                  common_param=None, deterministic_function=False,
                  optimizer_name=None, spsa_scale=500000, proc_list=[],
                  cutechess_debug=False, cutechess_wait=5000,
-                 protocol='uci'):
+                 protocol='uci', enhance=False, enhance_fenfile='default'):
         self.optimizer = optimizer
         self.engine_file = engine_file
         self.input_param = input_param
@@ -140,11 +140,12 @@ class Objective:
             self.move_time = self.move_time_ms
 
         # Raise error if there are no or unsupported move control.
-        if self.move_time is None and self.nodes is None:
-            if self.base_time_sec is None and self.depth is None:
-                raise Exception('Error, missing time and depth control!')
-            elif self.base_time_sec is None and self.inc_time_sec is not None and self.depth is not None:
-                raise Exception('Error, not supported move control!')
+        if not enhance:
+            if self.move_time is None and self.nodes is None:
+                if self.base_time_sec is None and self.depth is None:
+                    raise Exception('Error, missing time and depth control!')
+                elif self.base_time_sec is None and self.inc_time_sec is not None and self.depth is not None:
+                    raise Exception('Error, not supported move control!')
 
         self.opening_file = opening_file
         self.opening_file_format = opening_file_format
@@ -172,6 +173,36 @@ class Objective:
         self.cutechess_debug=cutechess_debug
         self.cutechess_wait=cutechess_wait
         self.protocol=protocol
+        self.enhance = enhance
+        self.enhance_fenfile = enhance_fenfile
+
+    def bench(self, test_options):
+        """
+        Run the engine with bench command using enhance.py interface and
+        return the total nodes searched.
+        """
+        total_nodes = None
+        command = f' -engine cmd={self.engine_file} {test_options}'
+        command += f' -fenfile {self.enhance_fenfile}'
+
+        if os_name.lower() == 'windows':
+            process = Popen(str(self.match_manager_path) + command, stdout=PIPE, text=True)
+        else:
+            process = Popen(shlex.split(str(self.match_manager_path) + command), stdout=PIPE, text=True)
+
+        # Parse the bench output.
+        for eline in iter(process.stdout.readline, ''):
+            line = eline.strip()
+            # total nodes searched from 4 workers: 894889
+            if line.startswith('total nodes searched from '):
+                total_nodes = int(line.split(': ')[1])
+            elif 'bench done' in line:
+                break
+
+        if total_nodes is None:
+            raise Exception('Error, there is something wrong with the bench command.')
+
+        return total_nodes
 
     def run(self, **param):
 
@@ -245,48 +276,54 @@ class Objective:
         if self.common_param is not None:
             logger.info(f'common param: {self.common_param}')
 
-        if self.use_best_param:
-            logger.info(f'recommended vs best')
-        else:
-            logger.info(f'recommended vs init')
+        if not self.enhance:
+            if self.use_best_param:
+                logger.info(f'recommended vs best')
+            else:
+                logger.info(f'recommended vs init')
 
         log_cpu(self.proc_list, msg='before a match starts')
 
-        result = engine_match(self.engine_file, test_options, base_options,
-                              self.opening_file, self.opening_file_format,
-                              games=self.games_per_budget,
-                              depth=self.depth, concurrency=self.concurrency,
-                              base_time_sec=self.base_time_sec,
-                              inc_time_sec=self.inc_time_sec,
-                              match_manager=self.match_manager,
-                              match_manager_path=self.match_manager_path,
-                              variant=self.variant,
-                              cutechess_debug=self.cutechess_debug,
-                              cutechess_wait=self.cutechess_wait,
-                              move_time=self.move_time, nodes=self.nodes,
-                              protocol=self.protocol)
+        if self.enhance:
+            result = self.bench(test_options)
+            logger.info(f'total nodes searched: {result}')
+            return -result
+        else:
+            result = engine_match(self.engine_file, test_options, base_options,
+                                  self.opening_file, self.opening_file_format,
+                                  games=self.games_per_budget,
+                                  depth=self.depth, concurrency=self.concurrency,
+                                  base_time_sec=self.base_time_sec,
+                                  inc_time_sec=self.inc_time_sec,
+                                  match_manager=self.match_manager,
+                                  match_manager_path=self.match_manager_path,
+                                  variant=self.variant,
+                                  cutechess_debug=self.cutechess_debug,
+                                  cutechess_wait=self.cutechess_wait,
+                                  move_time=self.move_time, nodes=self.nodes,
+                                  protocol=self.protocol)
 
-        min_res = 1.0 - result
+            min_res = 1.0 - result
 
-        log_cpu(self.proc_list, msg='after the match')
+            log_cpu(self.proc_list, msg='after the match')
 
-        logger.info(f'actual result: {result:0.5f} @{self.games_per_budget} games,'
-                    f' minimized result or loss: {min_res:0.5f},'
-                    ' point of view: recommended\n')
+            logger.info(f'actual result: {result:0.5f} @{self.games_per_budget} games,'
+                        f' minimized result or loss: {min_res:0.5f},'
+                        ' point of view: recommended\n')
 
-        # Modify the loss that is reported to the optimizer as
-        # the base engine will be using the current best param.
-        if self.use_best_param:
-            if min_res < 1.0 - self.best_result_threshold:
-                self.best_loss = self.best_loss - (1.0 - min_res) * 0.001
-                min_res = self.best_loss
-                self.best_param = copy.deepcopy(self.test_param)
-            else:
-                min_res = self.best_result_threshold + min_res * 0.0001
+            # Modify the loss that is reported to the optimizer as
+            # the base engine will be using the current best param.
+            if self.use_best_param:
+                if min_res < 1.0 - self.best_result_threshold:
+                    self.best_loss = self.best_loss - (1.0 - min_res) * 0.001
+                    min_res = self.best_loss
+                    self.best_param = copy.deepcopy(self.test_param)
+                else:
+                    min_res = self.best_result_threshold + min_res * 0.0001
 
-        log_cpu(self.proc_list, msg='just before sending the result to optimizer')
+            log_cpu(self.proc_list, msg='just before sending the result to optimizer')
 
-        return min_res
+            return min_res
 
 
 def set_param(input_param):
@@ -697,7 +734,12 @@ def main():
                              'duel.py for xboard engines:\n'
                              '--match-manager-path python c:/chess/tourney_manager/duel/duel.py\n'
                              'or\n'
-                              '--match-manager-path c:/python3/python c:/chess/tourney_manager/duel/duel.py')
+                              '--match-manager-path c:/python3/python c:/chess/tourney_manager/duel/duel.py\n'
+                             'enhance.py for bench\n'
+                             '--match-manager-path python c:/lakas/interface/enhance.py')
+    parser.add_argument('--enhance-fenfile', required=False, type=str,
+                        help='position file in fen or epd format used for the bench command, default=default',
+                        default='default')
     parser.add_argument('--opening-file', required=True, type=str,
                         help='Start opening filename in pgn or epd format.')
     parser.add_argument('--opening-file-format', required=True, type=str,
@@ -736,6 +778,8 @@ def main():
                         help='Use best param for the base engine. A param'
                              ' becomes best if it defeats the\n'
                              'current best by --best-result-threshold value.')
+    parser.add_argument('--enhance', action='store_true',
+                        help='Run engine with bench command and return nodes as objective value.')
     parser.add_argument('--best-result-threshold', required=False, type=float,
                         help='When match result is greater than this, update'
                              ' the best param, default=0.5.\n'
@@ -915,7 +959,9 @@ def main():
                           proc_list=proc_list,
                           cutechess_debug=args.cutechess_debug,
                           cutechess_wait=args.cutechess_wait,
-                          protocol=args.protocol)
+                          protocol=args.protocol,
+                          enhance=args.enhance,
+                          enhance_fenfile=args.enhance_fenfile)
 
     # Start the optimization.
     for _ in range(optimizer.budget):
