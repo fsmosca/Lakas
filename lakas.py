@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.39.0'
+__version__ = 'v0.40.0'
 __credits__ = ['ChrisWhittington', 'Claes1981', 'joergoster', 'Matthies',
                'musketeerchess', 'teytaud', 'thehlopster',
                'tryingsomestuff']
@@ -780,10 +780,8 @@ def main():
     parser.add_argument('--enhance-posperfile', required=False, type=int,
                         help='number of positions in the bench file, default=50',
                         default=50)
-    parser.add_argument('--opening-file', required=True, type=str,
-                        help='Start opening filename in pgn or epd format.')
-    parser.add_argument('--opening-file-format', required=True, type=str,
-                        help='Opening format can be epd or pgn.')
+    parser.add_argument('--opening-file', required=False, type=str,
+                        help='start opening filename in pgn or fen/epd format')
     parser.add_argument('--variant', required=False, type=str,
                         help='Game variant, default=normal',
                         default='normal')
@@ -847,6 +845,15 @@ def main():
     best_result_threshold = args.best_result_threshold
     deterministic_function = args.deterministic_function
     spsa_scale = args.spsa_scale
+
+    opening_file_format = 'pgn'
+    if not args.enhance:
+        if args.opening_file is None:
+            raise Exception('start opening file is missing!')
+        else:
+            opening_file_format = Path(args.opening_file).suffix[1:]
+            if opening_file_format == 'fen' or opening_file_format == 'epd':
+                opening_file_format = 'epd'
 
     # Check the filename of the intended output data.
     if (output_data_file is not None and
@@ -978,7 +985,7 @@ def main():
         best_loss = curr_best_loss["average"].mean
 
     objective = Objective(optimizer, args.engine, input_param, init_param,
-                          args.opening_file, args.opening_file_format,
+                          args.opening_file, opening_file_format,
                           best_param, best_loss,
                           games_per_budget=args.games_per_budget,
                           depth=args.depth, concurrency=args.concurrency,
