@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.41.0'
+__version__ = 'v0.42.0'
 __credits__ = ['ChrisWhittington', 'Claes1981', 'joergoster', 'Matthies',
                'musketeerchess', 'teytaud', 'thehlopster',
                'tryingsomestuff']
@@ -1041,21 +1041,21 @@ def main():
         if output_data_file is not None:
             optimizer.dump(output_data_file)
 
+        # Plot optimization data with hiplot, save it to html file.
+        # Install the hiplot lib with "pip install hiplot".
+        try:
+            exp = nevergrad_logger.to_hiplot_experiment()
+        except ImportError as msg:
+            logger.warning(msg)
+        except Exception:
+            logger.exception('Unexpected exception.')
+        else:
+            exp.to_html(f'{optimizer_log_file}.html')
+
     # Optimization done, get the best param.
     recommendation = optimizer.provide_recommendation()
     best_param = recommendation.value
     logger.info(f'best_param: {best_param[1]}')
-
-    # Plot optimization data with hiplot, save it to html file.
-    # Install the hiplot lib with "pip install hiplot".
-    try:
-        exp = nevergrad_logger.to_hiplot_experiment()
-    except ImportError as msg:
-        logger.warning(msg)
-    except Exception:
-        logger.exception('Unexpected exception.')
-    else:
-        exp.to_html(f'{optimizer_log_file}.html')
 
     # Output for match manager.
     option_output = ''
