@@ -8,7 +8,7 @@ A game parameter optimizer using nevergrad framework"""
 
 __author__ = 'fsmosca'
 __script_name__ = 'Lakas'
-__version__ = 'v0.40.0'
+__version__ = 'v0.41.0'
 __credits__ = ['ChrisWhittington', 'Claes1981', 'joergoster', 'Matthies',
                'musketeerchess', 'teytaud', 'thehlopster',
                'tryingsomestuff']
@@ -119,7 +119,9 @@ class Objective:
                  common_param=None, deterministic_function=False,
                  optimizer_name=None, spsa_scale=500000, proc_list=[],
                  cutechess_debug=False, cutechess_wait=5000,
-                 protocol='uci', enhance=False,
+                 protocol='uci',
+                 timemargin=50,
+                 enhance=False,
                  enhance_hashmb=64,
                  enhance_threads=1,
                  enhance_limitvalue=15,
@@ -134,6 +136,7 @@ class Objective:
         self.games_per_budget = games_per_budget
         self.best_loss = best_loss
         self.concurrency = concurrency
+        self.timemargin = timemargin
 
         self.depth = int(depth) if depth is not None else depth
         self.base_time_sec = int(base_time_sec) if base_time_sec is not None else base_time_sec
@@ -321,7 +324,8 @@ class Objective:
                                   cutechess_debug=self.cutechess_debug,
                                   cutechess_wait=self.cutechess_wait,
                                   move_time=self.move_time, nodes=self.nodes,
-                                  protocol=self.protocol)
+                                  protocol=self.protocol,
+                                  timemargin=self.timemargin)
 
             min_res = 1.0 - result
 
@@ -385,7 +389,7 @@ def get_match_commands(engine_file, test_options, base_options,
                        concurrency, base_time_sec, inc_time_sec, match_manager,
                        match_manager_path,
                        variant, cutechess_debug, cutechess_wait,
-                       move_time, nodes, protocol):
+                       move_time, nodes, protocol, timemargin):
     if match_manager == 'cutechess':
         tour_manager = Path(match_manager_path)
     else:
@@ -407,9 +411,9 @@ def get_match_commands(engine_file, test_options, base_options,
 
         # Set the move control.
         if move_time is not None:
-            command += f' -each st={move_time} timemargin={50}'
+            command += f' -each st={move_time}'
         elif nodes is not None:
-            command += f' -each tc=inf nodes={nodes} timemargin={50}'
+            command += f' -each tc=inf nodes={nodes}'
         else:
             if base_time_sec is not None and inc_time_sec is not None and depth is not None:
                 command += f' -each tc=0/0:{base_time_sec}+{inc_time_sec} depth={depth}'
@@ -424,8 +428,8 @@ def get_match_commands(engine_file, test_options, base_options,
             elif depth is not None:
                 command += f' -each tc=inf depth={depth}'
 
-        command += f' -engine cmd={engine_file} name={test_name} {test_options} proto={protocol}'
-        command += f' -engine cmd={engine_file} name={base_name} {base_options} proto={protocol}'
+        command += f' -engine cmd={engine_file} name={test_name} timemargin={timemargin} proto={protocol} {test_options}'
+        command += f' -engine cmd={engine_file} name={base_name} timemargin={timemargin} proto={protocol} {base_options}'
         command += f' -rounds {games//2} -games 2 -repeat 2'
         command += ' -recover'
         command += f' -wait {cutechess_wait}'
@@ -458,14 +462,15 @@ def engine_match(engine_file, test_options, base_options, opening_file,
                  match_manager='cutechess', match_manager_path=None,
                  variant='normal', cutechess_debug=False,
                  cutechess_wait=5000, move_time=None, nodes=None,
-                 protocol='uci') -> float:
+                 protocol='uci',
+                 timemargin=50) -> float:
     result = ''
 
     tour_manager, command = get_match_commands(
         engine_file, test_options, base_options, opening_file,
         opening_file_format, games, depth, concurrency, base_time_sec,
         inc_time_sec, match_manager, match_manager_path, variant, cutechess_debug,
-        cutechess_wait, move_time, nodes, protocol)
+        cutechess_wait, move_time, nodes, protocol, timemargin)
 
     # Execute the command line to start the match.
     if os_name.lower() == 'windows':
@@ -665,6 +670,9 @@ def main():
                              'move control like --base-time-sec or'
                              ' --depth or --move-time-sec example:\n'
                              '--nodes 500 ...')
+    parser.add_argument('--time-margin', required=False,
+                        help='time margin in milliseconds for cutechess interface (not required), default=50.',
+                        default=50)
     parser.add_argument('--optimizer', required=False, type=str,
                         help='Type of optimizer to use, can be oneplusone or'
                              ' tbpsa or bayesopt, or spsa, or cmaes, or ngopt, default=oneplusone.',
@@ -1005,6 +1013,7 @@ def main():
                           cutechess_debug=args.cutechess_debug,
                           cutechess_wait=args.cutechess_wait,
                           protocol=args.protocol,
+                          timemargin = args.time_margin,
                           enhance=args.enhance,
                           enhance_hashmb=args.enhance_hashmb,
                           enhance_threads=args.enhance_threads,
